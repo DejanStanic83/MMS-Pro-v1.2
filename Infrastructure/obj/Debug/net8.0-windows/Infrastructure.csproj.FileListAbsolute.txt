@@ -8,6 +8,7 @@ C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastructure.AssemblyInfoInputs.cache
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastructure.AssemblyInfo.cs
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastructure.csproj.CoreCompileInputs.cache
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastructure.sourcelink.json
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastr.15EFFBFE.Up2Date
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\Infrastructure.dll
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure\obj\Debug\net8.0-windows\refint\Infrastructure.dll

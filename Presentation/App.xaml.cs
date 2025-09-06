@@ -12,6 +12,8 @@ using MMS.Presentation.ViewModels;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Serilog.Extensions.Logging;
+using Domain.Common;
+using MMS.Application.DTOs;
 
 namespace Presentation
 {
@@ -45,6 +47,7 @@ namespace Presentation
             services.AddScoped<IAuthService, AuthService>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<ShellViewModel>();
+            services.AddSingleton<IUserSession, UserSession>();
 
             // Registracija u DI
             //services.AddScoped<DatabaseConnector>();
@@ -64,27 +67,9 @@ namespace Presentation
                 loggingBuilder.AddSerilog(Log.Logger, dispose: true);
             });
 
-            ServiceProvider = services.BuildServiceProvider();
+            services.AddAutoMapper(typeof(UserProfile));
 
-            /*var dbConnector = ServiceProvider.GetRequiredService<DatabaseConnector>();
-            try
-            {
-                var healthOk = await dbConnector.HealthCheckAsync();
-                if (!healthOk)
-                {
-                    MessageBox.Show("Neuspešna konekcija sa bazom!\nDetalji su u logs/app.log.", "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                else
-                {
-                    // Dodaj ovu liniju za potvrdu uspešne konekcije
-                    MessageBox.Show("Konekcija sa bazom je uspešno uspostavljena.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    Log.Information("Konekcija sa bazom je uspešno uspostavljena.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Greška pri konekciji: {ex.Message}", "Greška", MessageBoxButton.OK, MessageBoxImage.Error);
-            }*/
+            ServiceProvider = services.BuildServiceProvider();
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {

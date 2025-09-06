@@ -137,6 +137,7 @@ C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Te
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Console.AssemblyInfoInputs.cache
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Console.AssemblyInfo.cs
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Console.csproj.CoreCompileInputs.cache
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Console.sourcelink.json
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Con.6B0CC22B.Up2Date
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\Test Console.dll
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Test Console\obj\Debug\net8.0\refint\Test Console.dll

@@ -156,6 +156,7 @@ C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\ne
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastructure.Test.AssemblyInfoInputs.cache
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastructure.Test.AssemblyInfo.cs
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastructure.Test.csproj.CoreCompileInputs.cache
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastructure.Test.sourcelink.json
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastr.CD3C7713.Up2Date
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\Infrastructure.Test.dll
 C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0-windows\refint\Infrastructure.Test.dll
