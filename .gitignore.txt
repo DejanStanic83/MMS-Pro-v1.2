@@ -1,0 +1,94 @@
+# Visual Studio / .NET
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.csproj.user
+
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+TestResults/
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# User-specific temp files
+*.swp
+*.tmp
+*.bak
+*.orig
+*.rej
+*.dbmdl
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+*.sln.iml
+
+# VS Code (optional – obriši ako želiš da deliš podešavanja)
+.vscode/
+
+# User secrets (ako se nađe u repou)
+**/secrets.json
+
+# Entity Framework
+# (Migracije se NE ignorišu – drži ih u repou)
+# Migrations/
+
+# AppSettings (lokalne varijante)
+appsettings.Development.json
+appsettings.Local.json
+
+# Database files
+*.mdf
+*.ldf
+*.sqlite
+
+# Crash dumps
+*.dmp
+
+# Diagnostics / profiling / coverage
+*.pdb
+*.vsp
+*.psess
+*.psess.runsettings
+*.coverage
+*.coveragexml
+*.testsettings
+*.vsmdi
+
+# VS extensions / publish artifacts
+*.vsix
+*.vsixmanifest
+*.publish.xml
+*.pubxml
+*.publishproj
+
+# Certificates / keys (nikad ne komitovati tajne)
+*.pfx
+*.p12
+*.key
+*.cer
+*.crt
+*.pem
+*.jks
+*.keystore
+*.snk
+
+# Local test data
+*.testdata
+*.localhistory
+
+# WPF Designer
+# *.designer.cs  <-- namerno nije ignorisan (treba da bude u repou)

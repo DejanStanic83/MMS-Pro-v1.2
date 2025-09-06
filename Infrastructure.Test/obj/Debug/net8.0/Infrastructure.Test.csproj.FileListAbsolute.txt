@@ -1,0 +1,5 @@
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0\Infrastructure.Test.csproj.AssemblyReference.cache
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0\Infrastructure.Test.GeneratedMSBuildEditorConfig.editorconfig
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0\Infrastructure.Test.AssemblyInfoInputs.cache
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0\Infrastructure.Test.AssemblyInfo.cs
+C:\Servis Interno\Projekti\Projekat MMS\MMS Pro\Infrastructure.Test\obj\Debug\net8.0\Infrastructure.Test.csproj.CoreCompileInputs.cache

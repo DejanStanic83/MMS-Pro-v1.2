@@ -1,0 +1,1950 @@
+Vizija projekta
+Desktop servisna aplikacija (WPF/.NET8) za vođenje:
+•	klijenata/objekata/komora,
+•	ugovora i SLA,
+•	radnih naloga i kalendara,
+•	materijala/opreme,
+•	faktura, uplata i rashoda,
+•	izveštaja i evidencija (kontakti, aktivnosti, garancije).
+________________________________________
+Arhitektura & organizacija
+Tehnički okvir
+•	UI: WPF (XAML) + MVVM.
+•	Slojevi:
+o	Presentation (Views/UserControls + ViewModeli),
+o	Application (servisi/use-case logika),
+o	Infrastructure (pristup SQL Serveru; ADO.NET ili EF Core),
+o	Domain/DTO (modeli za UI i prenos podataka).
+•	Konfiguracija: appsettings.json + User Secrets (za konekcije).
+•	Dnevnik rada (logging): Serilog (datoteka + rolling).
+•	Migracije baze: pošto već imaš bazu, za početak Database-First; kasnije EF migracije ako želite.
+Uloge i dozvole
+•	Admin (sve),
+•	Serviser (RN, kalendar, materijal, aktivnosti),
+•	Komercijala (klijenti, ugovori, fakturisanje),
+•	Magacin (oprema, zalihe – ako uvedete),
+•	Finansije (fakture, uplate, izveštaji),
+•	Viewer (read-only).
+Repo & grananje
+•	main (stabilno), develop (integracija), feature/* (po funkciji).
+•	Pull request + code review, CI (build + unit test).
+Upravljanje projektom (alat)
+Predlog: Azure DevOps (Boards + Repos + Pipelines) ili GitHub Projects (+ Issues + Actions).
+Ako hoćeš “sve na jednom mestu” i Windows fokus: Azure DevOps je odličan izbor.
+________________________________________
+Šabloni zadataka (FunctionSpec)
+Koristi isti format za svaku funkciju (task):
+1.	Naziv: kratko (npr. “Login: autentikacija”).
+2.	Korisnička priča: “Kao {uloga} želim {akciju} da bih {benefit}”.
+3.	UI opseg: koje forme/ekrani, polja, validacije.
+4.	Podaci: koje tabele/kolone čita/piše.
+5.	Pravila: validacije, dozvole, automatika.
+6.	Greške & ivice: šta ako (nema naloga, lozinka, mreža…).
+7.	Ishodi/Output: šta se menja u sistemu.
+8.	Accept. criteria: nabrojivo, proverljivo, 6–10 tačaka.
+9.	Testovi: ručni koraci i/ili automatski.
+10.	Zavisnosti: od kojih funkcija zavisi.
+________________________________________
+Roadmap implementacije (korak-po-korak)
+Faza 0 — Skeleton i infrastruktura
+Cilj: prazna aplikacija sa “okvirom” i menijem.
+•	Postavi solution strukturu (Presentation, Application, Infrastructure, Domain).
+•	Uvedi DI (ServiceCollection), logging, konfiguraciju.
+•	Podesi DatabaseConnector (ili EF DbContext) i health check.
+•	Uvedi UserSession (trenutni korisnik, uloga).
+Accept. criteria
+•	Aplikacija se startuje, učitava config, konekcija uspe, prazan Shell sa menijem.
+________________________________________
+Faza 1 — Autentikacija (Login) + Glavni meni
+Funkcija 1.1 – Login forma
+UI: UserControl sa poljima Korisničko ime, Lozinka, dugmad Prijava, Odustani.
+Pravila:
+•	Lozinka se ne prikazuje; obavezna oba polja.
+•	Upit nad Users: traži User_Name (case-insensitive), uzima PasswordHash i IsActive.
+•	Hash verifikacija (PBKDF2/Argon2). Ako IsActive=0 → odbij.
+•	Na uspeh: popuni UserSession (Id, UserName, Role, Ime/Prezime), upiši LastLoginAt.
+•	Na neuspeh: generična poruka (“Pogrešno korisničko ime ili lozinka”).
+Accept. criteria
+•	Onemogućeno dugme dok polja nisu popunjena.
+•	3 pogrešna pokušaja → 30s “cooldown”.
+•	LastLoginAt se ažurira.
+•	Nema čitanja ni prikaza hash-a u UI.
+Funkcija 1.2 – Glavni meni (Shell)
+UI: traka ili hamburger meni; stavke se vide prema ulogi.
+•	Klijenti, Objekti, Komore, Ugovori, Radni nalozi, Kalendar, Oprema, Fakturisanje, Uplate, Rashodi/Profit, Izveštaji, Administracija.
+Pravila
+•	Role-based vidljivost; npr. “Administracija” samo za Admin.
+•	Statusna traka (trenutni korisnik, baza/okruženje).
+•	“Odjava” briše UserSession i vraća na Login.
+Accept. criteria
+•	Svaka stavka otvara odgovarajući UserControl (placeholder).
+•	Role filtrira stavke.
+________________________________________
+Faza 2 — Šifrarnici (brzi ekrani)
+Zašto: pomoći će svim narednim formama.
+•	TipUsluge, Prioritet, KalendarStatus, FakturaStatus, JedinicaMere, KontaktUloga.
+•	Svaki: mala CRUD forma (grid lista + detalj), soft-delete ili Aktivan flag.
+Accept. criteria
+•	Dodavanje/izmena/gašenje radi; validacije (jedinstvenost šifre/naziva).
+________________________________________
+Faza 3 — Klijenti (master–detail)
+Funkcija 3.1 – Lista klijenata (pretraga + paging)
+UI: polje “Traži”, filter “Aktivan”, DataGrid (Naziv, PIB, Grad, Email).
+Pravila: pretraga po Naziv/PIB/MB/Email/Grad; sort po Nazivu; paging 50.
+Accept. criteria
+•	Pretraga uživo, brza navigacija kroz stranice.
+Funkcija 3.2 – Detalj klijenta
+UI: tabovi Osnovno, Kontakti, Objekti, Ugovori, Finansije, Aktivnosti.
+Osnovno (obavezno):
+•	Naziv (obavezno), PIB (9 cifara), Matični (8), Adresa, Grad, Zemlja, Telefon, Email.
+•	Validacije i poruke (regex; crvena ivica na grešku).
+Kontakti
+•	Lista kontakata (Ime, Prezime, Uloga, Email, Telefon, Primaran).
+•	Dodaj/Izmeni/Obriši; “Postavi primarni” (1 po klijentu/objektu).
+Objekti
+•	Prikaži vezane objekte; Dodaj postojeći (preko KlijentObjekat) ili Novi objekat wizard.
+Ugovori
+•	Lista ugovora klijenta; link “Otvori”.
+Finansije
+•	Sumari: ukupno fakturisano, plaćeno, dug, aging (0–30/31–60/61–90/90+).
+Aktivnosti
+•	Log beleški i podsetnika (iz Aktivnost).
+Accept. criteria
+•	Kreiranje, izmena, brisanje klijenta sa validacijama.
+•	Upozorenje na duplikat PIB-a.
+•	Primarni kontakt jedinstven.
+________________________________________
+Faza 4 — Objekti i Komore
+Funkcija 4.1 – Objekti
+•	Lista (Naziv, Grad, Adresa), detalj (lat/lon, email, telefon, vlasnik).
+•	“Poveži sa klijentom” (upis u KlijentObjekat).
+Funkcija 4.2 – Komore
+•	Lista po objektu, detalj (tip, dimenzije, serijski, datumi isporuke/pustanja).
+•	Tab “Ugrađena oprema” (iz Komora_Oprema), dodavanje/izmena/demontaža.
+Accept. criteria
+•	Veze K–O i K–Objekat poravnate sa FK u bazi.
+•	Unos lat/lon odbija neispravne vrednosti.
+________________________________________
+Faza 5 — Ugovori
+Funkcija 5.1 – Kreiranje ugovora (wizard)
+•	1/3 Klijent + Objekat,
+•	2/3 Izbor komora (jedna ili više),
+•	3/3 SLA + cenovnik (satnice, popusti; opc. Ugovor_Cenovnik).
+•	Status: Draft → Aktivan (datum od/do).
+Pravila
+•	Na Aktiviranje, zaključaj ključna polja; izmene kroz Aneks (verzionisanje polja).
+•	Validiraj da postoji bar jedna komora ili jasan opseg.
+Accept. criteria
+•	RN može referencirati ugovor; SLA snapshot će koristiti ova podešavanja.
+________________________________________
+Faza 6 — Radni nalozi (RN)
+Funkcija 6.1 – Kreiranje RN
+•	Iz ugovora ili “ad-hoc”.
+•	Polja: TipUsluge, Prioritet, Klijent/Objekat/Komora, kratak opis, planirani termin.
+•	Na save: upiši RN_SLA snapshot (resp/onsite, valuta, PDV).
+Funkcija 6.2 – Rad na RN (stavke)
+•	Tab Rad (sati po serviseru), Materijal (artikli/komponenta), Troškovi (km, putarina, smeštaj…).
+•	Automatika cene: Ugovor_Cenovnik → Oprema_Cenovnik → ručno (uz potvrdu).
+•	Rezime: suma bez/sa PDV; status RN (Draft/Na terenu/Završeno/Odobreno).
+Funkcija 6.3 – Prilozi, aktivnosti, istorija statusa
+•	Upload slika/dokumenata, log aktivnosti, RN_StatusHistory.
+Accept. criteria
+•	Izračuni iznosâ odgovaraju computed kolonama u bazi.
+•	Statusi teksta i datumi se beleže.
+•	Bez preklapanja termina po serviseru (ako uključite anti-overlap).
+________________________________________
+Faza 7 — Kalendar
+Funkcija 7.1 – Termin i dodela servisera
+•	Kreiraj termin (start, end, lokacija, RN veza), status iz KalendarStatus.
+•	Dodeli jednog ili više servisera (KalendarTermin_Serviser).
+•	Promena statusa (zakazano, pomereno, otkazano sa RazlogID).
+Accept. criteria
+•	Dnevni/weekly/agenda pogledi.
+•	Filter po serviseru i statusu.
+•	(Opc.) zabrana duplog termina istom serviseru u isto vreme.
+________________________________________
+Faza 8 — Fakturisanje i naplata
+Funkcija 8.1 – Generiši fakturu iz RN
+•	Izbor jedne ili više završenih RN → generiši Faktura + Faktura_Stavka iz RN_Stavka pogleda.
+•	Broj fakture, datum, rok dospeća (payment terms).
+•	Izračun PDV po kategoriji (ako uveden PorezStopa).
+Funkcija 8.2 – Uplate i alokacije
+•	Ekran “Uplate” (unos uplate, valuta).
+•	Alociraj uplatu na fakturu (isti valutni režim ili sa kursom).
+•	vFaktura_Stanje: Overdue i dana kašnjenja; sp_OsveziStatusFakture automatski PAID/PARTIAL.
+Accept. criteria
+•	Delimična plaćanja rade; dug i status se osvežavaju.
+•	Overdue lista sortira po “Dana kasni”.
+________________________________________
+Faza 9 — Rashodi & profit
+•	Unos internih troškova (RN_Rashod).
+•	Pregled marže po RN (vRN_Profit) i po klijentu/ugovoru.
+Accept. criteria
+•	Marža i Marža% se računaju korektno (netto prihodi − troškovi).
+________________________________________
+Faza 10 — Izveštaji (MVP set)
+•	RN po statusima i serviseru,
+•	fakture po statusu i aging,
+•	prihod/trošak/marža po klijentu/ugovoru,
+•	KPI: response/onsite SLA ispunjenost.
+________________________________________
+Faza 11 — Administracija
+•	Korisnici i uloge (bezbedno resetovanje lozinke),
+•	šifrarnici (JM, TipUsluge, Prioritet…),
+•	sistemske postavke (valuta, PDV default, numeracije dokumenata).
+________________________________________
+Predlog raspodele po timovima
+•	Tim A – Platforma: skeleton, DI, konfiguracija, logging, session, security, anti-overlap kalendar logika.
+•	Tim B – Master podaci: Klijenti, Objekti, Komore, Kontakti, Aktivnosti.
+•	Tim C – Ugovori & RN: Ugovori + SLA snapshot, RN kreiranje i stavke, prilozi, status istorija.
+•	Tim D – Fakturisanje & Finansije: Faktura, Uplata, Overdue, izveštaji finansijski.
+•	Tim E – QA & UX: test planovi, prihvatni testovi, dizajn formi i konzistentnost.
+Svaka funkcija se isporučuje kao UserControl + njen ViewModel + njen servis (use-case).
+________________________________________
+Definicije “spremno/urađeno”
+Definition of Ready
+•	User story, makete UI (wireframe), potvrđeni API/sql upiti,
+•	dozvole/role definisane,
+•	jasni acceptance kriterijumi,
+•	test podaci spremni.
+Definition of Done
+•	Funkcionalnost radi po kriterijumima,
+•	validacije i poruke urađene,
+•	logovi i greške pokriveni,
+•	unit/integration testovi prolaze,
+•	dokumentovan kratki “How-to” u wiki/README.
+________________________________________
+Šta radimo sada (korak 1/2)
+1.	Login – FunctionSpec
+o	Pripremi task sa gore navedenim poljima (UI, pravila, data, AC).
+o	Definiši hash algoritam (PBKDF2 sa 100k+ iteracija) i politiku lozinke.
+o	Definiši “lockout” posle N pokušaja (u Users ili posebnoj tabeli LoginAudit).
+2.	Glavni meni – FunctionSpec
+o	Navedi tačne stavke po roli (tabela: Rola → Menijska stavka).
+o	Navigacija: svaka stavka otvara svoj UserControl u content regionu.
+
+
+
+Funkcija 1 — Login (UserControl)
+1) User story
+Kao korisnik sistema, želim da se prijavim sa korisničkim imenom i lozinkom kako bih pristupio glavnom meniju u skladu sa svojom ulogom.
+2) Opseg (UI + protok)
+•	UserControl: LoginView
+o	Polja: Korisničko ime (textbox), Lozinka (password box)
+o	Kontrole: Prijava (button, default Enter), Odustani (button/Esc), opcija „Zapamti korisničko ime” (checkbox)
+o	Status: poruka o grešci, indikator „Prijava u toku…”
+•	Stanja: Idle → Submitting → Success (navigacija na Shell) / Error (prikaži poruku)
+•	Navigacija: uspešan login zatvara LoginView i prikazuje glavni Shell (Glavni meni)
+3) Pravila (biznis & bezbednost)
+•	Polja su obavezna; dugme Prijava aktivno tek kad su oba popunjena.
+•	Pretraga korisnika po Users.User_Name (case-insensitive, trim).
+•	Dozvola: Users.IsActive = 1 obavezno.
+•	Verifikacija lozinke: PBKDF2 (HMAC-SHA256), npr. Iterations = 150_000, per-user Salt.
+•	Na uspeh: upisati Users.LastLoginAt = SYSDATETIME(), postaviti UserSession (Id, UserName, Role, Ime, Prezime).
+•	Na neuspeh: generična poruka („Pogrešno korisničko ime ili lozinka”), bez otkrivanja šta je tačno pogrešno.
+•	Rate limiting / Lockout:
+o	Posle 3 uzastopna neuspeha: cooldown 30 s (na nivou korisnika).
+o	Posle 6 neuspeha u 10 min: lock naloga 15 min (LockoutUntil).
+•	Audit: svaki pokušaj login-a upisati u LoginAudit (vidi §6).
+4) Podaci (tabele/kolone koje koristimo)
+Postojeća tabela Users — već imamo: ID, User_Name, PasswordHash, Role, Email, IsActive, LastLoginAt, CreatedAt, UpdatedAt, RowVersion.
+Predlog dopune (bez koda, samo specifikacija kolona):
+•	PasswordSalt VARBINARY(32) (obavezno)
+•	PasswordAlgo NVARCHAR(20) (npr. 'PBKDF2-SHA256')
+•	PasswordIterations INT (npr. 150000)
+•	FailedLoginCount INT NOT NULL DEFAULT(0)
+•	LastFailedLoginAt DATETIME2 NULL
+•	LockoutUntil DATETIME2 NULL
+Nova tabela za evidenciju:
+•	LoginAudit
+Kolone: ID (PK), UserName NVARCHAR(50), UserID INT NULL, AttemptAt DATETIME2 NOT NULL, Success BIT NOT NULL, ClientHost NVARCHAR(100) NULL, Message NVARCHAR(200) NULL.
+5) Validacije (UI & server)
+•	UI: oba polja obavezna; trim whitespace; Prijava disabled dok nisu popunjena.
+•	Server:
+o	Ako LockoutUntil > now → odbij sa porukom „Nalog privremeno zaključan, pokušajte kasnije.”
+o	Verifikuj hash: iz baze dohvati PasswordHash, Salt, Iterations; izračunaj PBKDF2 na unetoj lozinci; stalno vreme poređenja hash-eva (constant-time compare).
+o	Na neuspeh: FailedLoginCount++, LastFailedLoginAt = now; ako prag pređen → postavi LockoutUntil.
+o	Na uspeh: reset FailedLoginCount=0, LockoutUntil=NULL, LastLoginAt=now.
+6) Dnevnik (logging/audit/telemetrija)
+•	LoginAudit: upis svake prijave (USPEH/NEUSPEH).
+•	App log (Serilog): INFO uspešni logini (userId); WARN neuspešni; bez snimanja lozinki.
+•	Anonimizovati IP/host ako je osetljivo.
+7) Dozvole & sesija
+•	Posle uspešnog login-a postavlja se UserSession (singleton u aplikaciji):
+o	UserId, UserName, Role, DisplayName (Ime + Prezime)
+o	Permissions izvedene iz Role (npr. Admin = all; Serviser = RN, Kalendar…)
+•	Shell čita UserSession i prikazuje meni po ulozi (sledeća funkcija).
+8) Greške i „ivice“
+•	Ne postoji korisnik: tretiraj kao neuspešnu prijavu (generična poruka).
+•	IsActive=0: „Nalog je deaktiviran. Obratite se administratoru.”
+•	Baza nedostupna: prikaži dijalog „Sistem trenutno nije dostupan.” (Retry/Cancel).
+•	Tastatura: Enter = Prijava, Esc = Odustani.
+9) Konfiguracija
+•	Auth.HashAlgo = PBKDF2-SHA256
+•	Auth.Iterations = 150000
+•	Auth.Lock.CooldownThreshold = 3
+•	Auth.Lock.CooldownSeconds = 30
+•	Auth.Lock.HardThreshold = 6
+•	Auth.Lock.HardWindowMinutes = 10
+•	Auth.Lock.LockMinutes = 15
+•	Auth.RememberUserName = true (ako checkbox čekiran, čuvati samo korisničko ime u lokalnom settings-u)
+10) Interfejsi (ugovor između slojeva)
+•	IAuthService
+o	Task<AuthResult> AuthenticateAsync(string userName, string password, CancellationToken ct)
+o	Task SignOutAsync()
+o	Task ChangePasswordAsync(int userId, string oldPwd, string newPwd)
+o	Task AdminResetPasswordAsync(int userId, string newPwd)
+•	AuthResult
+o	Success, ErrorCode (InvalidCredentials, LockedOut, Inactive, ServerError)
+o	User (Id, UserName, Role, Ime, Prezime) kada je uspeh
+11) Prihvatni kriterijumi (AC)
+1.	Prijava je onemogućena dok polja nisu popunjena.
+2.	Uspešna prijava postavlja UserSession i otvara glavni Shell.
+3.	Na pogrešnu lozinku, poruka je generička; LoginAudit upis pokazuje Success=0.
+4.	Posle 3 greške – UI odbija pokušaje 30 s (tajmer).
+5.	Posle 6 grešaka u 10 min – nalog zaključan 15 min (LockoutUntil setovan).
+6.	IsActive=0 → jasna poruka o neaktivnom nalogu; audit upis.
+7.	LastLoginAt se ažurira na uspeh.
+8.	Lozinka se nigde ne loguje niti prikazuje.
+9.	„Zapamti korisničko ime” radi lokalno; lozinka se ne čuva.
+12) Test slučajevi (ručnim redom)
+•	T1: Prazna polja → dugme disabled.
+•	T2: Neispravno korisničko ime → generička poruka, audit neuspeh.
+•	T3: Ispravno ime, pogrešna lozinka x3 → cooldown 30 s (UI blok).
+•	T4: 6 neuspeha u 10 min → lockout 15 min (server poruka).
+•	T5: Aktiviran korisnik se prijavljuje uspešno → LastLoginAt set, audit uspeh, Shell otvoren.
+•	T6: Neaktivan korisnik → poruka “deaktiviran”, audit neuspeh.
+•	T7: Baza nedostupna → poruka “sistem nedostupan”.
+•	T8: „Zapamti korisničko ime” → restart app, polje popunjeno.
+Funkcija 1 — Login (UserControl)
+1) User story
+Kao korisnik sistema, želim da se prijavim sa korisničkim imenom i lozinkom kako bih pristupio glavnom meniju u skladu sa svojom ulogom.
+2) Opseg (UI + protok)
+•	UserControl: LoginView
+o	Polja: Korisničko ime (textbox), Lozinka (password box)
+o	Kontrole: Prijava (button, default Enter), Odustani (button/Esc), opcija „Zapamti korisničko ime” (checkbox)
+o	Status: poruka o grešci, indikator „Prijava u toku…”
+•	Stanja: Idle → Submitting → Success (navigacija na Shell) / Error (prikaži poruku)
+•	Navigacija: uspešan login zatvara LoginView i prikazuje glavni Shell (Glavni meni)
+3) Pravila (biznis & bezbednost)
+•	Polja su obavezna; dugme Prijava aktivno tek kad su oba popunjena.
+•	Pretraga korisnika po Users.User_Name (case-insensitive, trim).
+•	Dozvola: Users.IsActive = 1 obavezno.
+•	Verifikacija lozinke: PBKDF2 (HMAC-SHA256), npr. Iterations = 150_000, per-user Salt.
+•	Na uspeh: upisati Users.LastLoginAt = SYSDATETIME(), postaviti UserSession (Id, UserName, Role, Ime, Prezime).
+•	Na neuspeh: generična poruka („Pogrešno korisničko ime ili lozinka”), bez otkrivanja šta je tačno pogrešno.
+•	Rate limiting / Lockout:
+o	Posle 3 uzastopna neuspeha: cooldown 30 s (na nivou korisnika).
+o	Posle 6 neuspeha u 10 min: lock naloga 15 min (LockoutUntil).
+•	Audit: svaki pokušaj login-a upisati u LoginAudit (vidi §6).
+4) Podaci (tabele/kolone koje koristimo)
+Postojeća tabela Users — već imamo: ID, User_Name, PasswordHash, Role, Email, IsActive, LastLoginAt, CreatedAt, UpdatedAt, RowVersion.
+Predlog dopune (bez koda, samo specifikacija kolona):
+•	PasswordSalt VARBINARY(32) (obavezno)
+•	PasswordAlgo NVARCHAR(20) (npr. 'PBKDF2-SHA256')
+•	PasswordIterations INT (npr. 150000)
+•	FailedLoginCount INT NOT NULL DEFAULT(0)
+•	LastFailedLoginAt DATETIME2 NULL
+•	LockoutUntil DATETIME2 NULL
+Nova tabela za evidenciju:
+•	LoginAudit
+Kolone: ID (PK), UserName NVARCHAR(50), UserID INT NULL, AttemptAt DATETIME2 NOT NULL, Success BIT NOT NULL, ClientHost NVARCHAR(100) NULL, Message NVARCHAR(200) NULL.
+5) Validacije (UI & server)
+•	UI: oba polja obavezna; trim whitespace; Prijava disabled dok nisu popunjena.
+•	Server:
+o	Ako LockoutUntil > now → odbij sa porukom „Nalog privremeno zaključan, pokušajte kasnije.”
+o	Verifikuj hash: iz baze dohvati PasswordHash, Salt, Iterations; izračunaj PBKDF2 na unetoj lozinci; stalno vreme poređenja hash-eva (constant-time compare).
+o	Na neuspeh: FailedLoginCount++, LastFailedLoginAt = now; ako prag pređen → postavi LockoutUntil.
+o	Na uspeh: reset FailedLoginCount=0, LockoutUntil=NULL, LastLoginAt=now.
+6) Dnevnik (logging/audit/telemetrija)
+•	LoginAudit: upis svake prijave (USPEH/NEUSPEH).
+•	App log (Serilog): INFO uspešni logini (userId); WARN neuspešni; bez snimanja lozinki.
+•	Anonimizovati IP/host ako je osetljivo.
+7) Dozvole & sesija
+•	Posle uspešnog login-a postavlja se UserSession (singleton u aplikaciji):
+o	UserId, UserName, Role, DisplayName (Ime + Prezime)
+o	Permissions izvedene iz Role (npr. Admin = all; Serviser = RN, Kalendar…)
+•	Shell čita UserSession i prikazuje meni po ulozi (sledeća funkcija).
+8) Greške i „ivice“
+•	Ne postoji korisnik: tretiraj kao neuspešnu prijavu (generična poruka).
+•	IsActive=0: „Nalog je deaktiviran. Obratite se administratoru.”
+•	Baza nedostupna: prikaži dijalog „Sistem trenutno nije dostupan.” (Retry/Cancel).
+•	Tastatura: Enter = Prijava, Esc = Odustani.
+9) Konfiguracija
+•	Auth.HashAlgo = PBKDF2-SHA256
+•	Auth.Iterations = 150000
+•	Auth.Lock.CooldownThreshold = 3
+•	Auth.Lock.CooldownSeconds = 30
+•	Auth.Lock.HardThreshold = 6
+•	Auth.Lock.HardWindowMinutes = 10
+•	Auth.Lock.LockMinutes = 15
+•	Auth.RememberUserName = true (ako checkbox čekiran, čuvati samo korisničko ime u lokalnom settings-u)
+10) Interfejsi (ugovor između slojeva)
+•	IAuthService
+o	Task<AuthResult> AuthenticateAsync(string userName, string password, CancellationToken ct)
+o	Task SignOutAsync()
+o	Task ChangePasswordAsync(int userId, string oldPwd, string newPwd)
+o	Task AdminResetPasswordAsync(int userId, string newPwd)
+•	AuthResult
+o	Success, ErrorCode (InvalidCredentials, LockedOut, Inactive, ServerError)
+o	User (Id, UserName, Role, Ime, Prezime) kada je uspeh
+11) Prihvatni kriterijumi (AC)
+1.	Prijava je onemogućena dok polja nisu popunjena.
+2.	Uspešna prijava postavlja UserSession i otvara glavni Shell.
+3.	Na pogrešnu lozinku, poruka je generička; LoginAudit upis pokazuje Success=0.
+4.	Posle 3 greške – UI odbija pokušaje 30 s (tajmer).
+5.	Posle 6 grešaka u 10 min – nalog zaključan 15 min (LockoutUntil setovan).
+6.	IsActive=0 → jasna poruka o neaktivnom nalogu; audit upis.
+7.	LastLoginAt se ažurira na uspeh.
+8.	Lozinka se nigde ne loguje niti prikazuje.
+9.	„Zapamti korisničko ime” radi lokalno; lozinka se ne čuva.
+12) Test slučajevi (ručnim redom)
+•	T1: Prazna polja → dugme disabled.
+•	T2: Neispravno korisničko ime → generička poruka, audit neuspeh.
+•	T3: Ispravno ime, pogrešna lozinka x3 → cooldown 30 s (UI blok).
+•	T4: 6 neuspeha u 10 min → lockout 15 min (server poruka).
+•	T5: Aktiviran korisnik se prijavljuje uspešno → LastLoginAt set, audit uspeh, Shell otvoren.
+•	T6: Neaktivan korisnik → poruka “deaktiviran”, audit neuspeh.
+•	T7: Baza nedostupna → poruka “sistem nedostupan”.
+•	T8: „Zapamti korisničko ime” → restart app, polje popunjeno.
+________________________________________
+Sledeći korak
+Ako potvrdiš ovaj FunctionSpec za Login, prelazimo na Funkciju 2 — Glavni meni (Shell + role-based navigacija) istim formatom (UI raspored, stavke po ulogama, pravila prikaza, stanja, AC, testovi).
+Кажеш:
+potvrdjujem
+ChatGPT је рекао:
+Размишљао сам 12s
+super — idemo na Funkciju 2: Glavni meni (Shell + role-based navigacija). I dalje samo logika i jasne upute, bez koda.
+
+Funkcija 2 — Shell & Glavni meni
+1) User story
+Kao korisnik sa ulogom (Admin/Serviser/Komercijala/Finansije/Magacin/Viewer), želim jasan glavni meni i navigaciju, da bih brzo pristupio ekranima koji su meni dozvoljeni.
+2) Opseg (UI & raspored)
+Shell (glavni prozor / host aplikacije) sa 4 regije:
+1.	Top bar: naziv aplikacije, okruženje (npr. “Prod/Dev”), globalna pretraga (kasnije), ikona notifikacija, korisnik (ime/uloga) + meni (Profil, Odjava).
+2.	Left nav (collapsible): vertikalni meni sa stavkama po ulozi; tooltips; sekcije.
+3.	Content region: ovde se prikazuju UserControl stranice.
+4.	Status bar: konekcija na bazu (ime), trenutni korisnik, sat, kratke poruke (busy state).
+Stanja UI:
+•	Ready (po loginu)
+•	Navigating (prikaži spinner u content regionu)
+•	Error (prikaži dijalog; zadrži poslednji stabilan ekran)
+3) Meni (stavke & rute)
+Nazivi modula (rute) — ovo neka budu konstante koje svi timovi koriste:
+•	Dashboard (opciono, kasnije)
+•	Klijenti
+•	Objekti
+•	Komore
+•	Ugovori
+•	RadniNalozi (lista + detalj)
+•	Kalendar
+•	Oprema (katalog)
+•	Fakturisanje (Fakture)
+•	Uplate
+•	Rashodi (i Profit – pregled)
+•	Izvestaji (MVP set)
+•	Administracija (Korisnici, šifrarnici)
+Grupisanje u meniju:
+•	Operativa: RadniNalozi, Kalendar
+•	Prodaja/Servis: Klijenti, Objekti, Komore, Ugovori, Oprema
+•	Finansije: Fakturisanje, Uplate, Rashodi, Izvestaji
+•	Sistem: Administracija
+4) Dozvole (role → vidljivost i pristup)
+Matrica minimalne vidljivosti (V = vidi/otvara, R = read-only):
+Modul	Admin	Serviser	Komercijala	Finansije	Magacin	Viewer
+Klijenti	V	R	V	R	R	R
+Objekti	V	R	V	R	R	R
+Komore	V	V	V	R	R	R
+Ugovori	V	R	V	R	—	R
+Radni nalozi	V	V	R	R	R	R
+Kalendar	V	V	R	—	—	R
+Oprema	V	R	V	R	V	R
+Fakturisanje	V	—	R	V	—	R
+Uplate	V	—	R	V	—	R
+Rashodi/Profit	V	R	—	V	—	R
+Izveštaji	V	R	R	V	R	R
+Administracija	V	—	—	—	—	—
+Pravila:
+•	Ako korisnik nema V — stavka se ne prikazuje. Ako ima R — prikaži, ali ekran je read-only.
+•	Fina-granularna prava (npr. “može brisati RN”) definišu se kasnije kroz policy-je.
+5) Navigacija i životni ciklus stranica
+•	Svaka stavka menija otvara UserControl (“stranicu”) u Content regionu.
+•	Navigacija jedna instanca po modulu (singleton stranica), osim ako modul eksplicitno traži više (npr. više RN detalja).
+•	Pre navigacije modul može pitati “Imaš nesačuvane izmene – Sačuvaj/Odbaci/Otkaži” (globalni UnsavedChangesGuard).
+•	Breadcrumbs (opciono): Klijenti > Detalj #123.
+6) Globalna pretraga (kasnije, ali rezervišemo mesto)
+•	Polje u Top bar: uneseš “rn 1054” ili “pib:123456789” → navigira na rezultat.
+•	Servis IGlobalSearchService prihvata query i vraća listu {tip, naslov, ruta, parametri}.
+7) Notifikacije / zadaci (kasnije)
+•	Ikona zvona u Top bar: broj dospelih Aktivnost.DueAt <= now za prijavljenog korisnika.
+•	Klik otvara listu; selekcija navigira na entitet.
+8) Pravila UX
+•	Meni je collapsible (ikonice + tooltip kad je sklopljen).
+•	Tastatura: Ctrl+K fokus globalne pretrage; Alt+1..9 brza navigacija u prve sekcije.
+•	Tema: svetla/tamna (opciono).
+•	Stanje ekrana se pamti (veličina kolona, poslednji filteri) – lokalni settings po korisniku.
+9) Greške & poruke
+•	Ako navigiraš na modul bez dozvole → poruka “Nemate dozvolu za pristup ovom modulu.”
+•	Ako backend/baza padne → “Sistem trenutno nije dostupan.” i dugme Pokušaj ponovo.
+•	Nesačuvane izmene → guard prompt.
+•	Nevažeća ruta → otvori Dashboard/početnu.
+10) Konfiguracija (appsettings)
+•	Shell.ShowEnvironmentBanner = true (npr. DEV/TEST/PROD)
+•	Shell.Nav.CollapsedByDefault = false
+•	Shell.ModulesOrder = [...] (redosled stavki)
+•	Auth.LogoutClosesApp = false (po odjavi vrati na Login)
+•	Search.Enabled = false (MVP=false; kasnije true)
+11) Interfejsi (ugovor između slojeva)
+Bez implementacije, samo potpis i očekivano ponašanje:
+•	INavigationService
+o	bool CanNavigate(string route) – pita AccessControl.
+o	Task NavigateAsync(string route, object? parameter = null)
+o	Task<bool> ConfirmLeaveAsync() – uključi UnsavedChanges guard.
+•	IAccessControl
+o	bool HasAccess(string route, string permission)
+(permission: “View”, “Edit”, “Delete”, …)
+o	IEnumerable<string> GetVisibleRoutesForRole(string role)
+•	IUnsavedChangesAware (opciono na stranici)
+o	bool HasUnsavedChanges { get; }
+o	Task<bool> SaveAsync() / void DiscardChanges()
+•	IGlobalSearchService (kasnije)
+o	Task<IReadOnlyList<SearchHit>> SearchAsync(string query, CancellationToken ct)
+•	IUserSession
+o	int UserId, string UserName, string Role, string DisplayName
+o	void SignOut()
+Svaka “stranica” (UserControl) implementira opcionalno IUnsavedChangesAware. Shell pre navigacije pita INavigationService.ConfirmLeaveAsync().
+12) Prihvatni kriterijumi (AC)
+1.	Nakon login-a, Shell se prikazuje sa top bar-om, menijem, content i status trakom.
+2.	Meni prikazuje samo stavke dozvoljene za ulogu; klik otvara odgovarajuću stranicu.
+3.	Navigacija je disable-ovana dok stranica učitava podatke (indikator “Loading…”).
+4.	Ako stranica ima nesačuvane izmene, na napuštanje traži potvrdu (Sačuvaj/Odbaci/Otkaži).
+5.	“Odjava” prazni sesiju i vraća na Login.
+6.	Greška dozvole prikazuje jasnu poruku i ne menja stranicu.
+7.	(Ako je uključeno) Meni može da se sklapa/širi; tooltips rade; stanje zapamćeno.
+8.	Status bar prikazuje ime baze i aktuelnog korisnika.
+13) Test plan (ručnim redom)
+•	R1 (Admin): vidi sve stavke; otvara svaku bez poruke o pravima.
+•	R2 (Serviser): ne vidi Finansije/Administraciju; vidi Radne naloge/Kalendar; Radni nalozi su edit, Klijenti su read-only.
+•	R3 (Komercijala): vidi Klijente/Ugovore/Oprema (edit), RN read-only, Finansije read-only.
+•	R4 (Finansije): vidi Fakturisanje/Uplate/Rashodi/Izveštaji, ostalo read-only.
+•	R5 (Viewer): vidi većinu, read-only; pokušaj izmene → onemogućeno.
+•	Navigacija sa nesačuvanim izmenama → prompt radi korektno (testirati sve tri opcije).
+•	Odjava → vraća na Login i briše UserSession.
+•	Prekid konekcije → dobija se “sistem nedostupan” pri otvaranju modula.
+14) Podele zadatka po podtimovima
+•	Shell tim
+o	Layout (Top/Left/Content/Status), collapsible nav, status indikator, environment banner.
+o	INavigationService, IUserSession, IUnsavedChangesAware.
+o	Meni generator (po IAccessControl).
+•	Security tim
+o	IAccessControl pravila (mapa role → rute + prava).
+o	Hook sa Login (UserSession).
+•	UX tim
+o	Ikone, tooltip text, redosled modula, responzivnost i tastaturne prečice.
+o	Poruke/terminologija (srp/eng).
+•	QA tim
+o	Test plan iz §13, test podaci (po jedna osoba za svaku ulogu).
+
+
+
+
+
+Faza 3 — KLIJENTI
+Funkcija 3.1 — Lista + pretraga (master)
+1) User story
+Kao korisnik želim listu klijenata sa brzom pretragom i sortiranjem, da bih brzo pronašao klijenta i otvorio detalje.
+2) Opseg (UI & raspored)
+UserControl: KlijentiMasterView
+Leva strana filteri, ispod DataGrid lista; desno ništa (ili prazan “placeholder”) — detalj se otvara u KlijentiDetailView.
+•	Filter traka (Top)
+o	TextBox Traži: pretražuje Naziv, PIB, Matični, Email, Grad.
+o	(Opcionalno) Combo Aktivni/Svi — ako uvedeš kolonu IsActive u Klijenti.
+o	Dugme Pretraži i Reset.
+•	Lista (DataGrid)
+o	Kolone (MVP): Naziv, PIB, Grad, Email, Telefon.
+o	Sort klikom na zaglavlje (bar po Nazivu, PIB, Gradu).
+o	Paging (dole desno): 50 po strani; dugmad «, ‹, broj strane, ›, ».
+•	Akcije (Bottom bar)
+o	Novi, Izmeni, Obriši (ili Deaktiviraj), Osveži.
+3) Interakcije & stanja
+•	Stanje Loading (spinner preko liste) dok se čita strana.
+•	Ako je Traži prazno: vrati prvu stranu sortiranih po Nazivu.
+•	Enter u polju Traži = Pretraži.
+•	Dvoklik na red ili Izaberi/Otvori → otvara KlijentiDetailView za izabrani ID.
+4) Podaci (tabele/kolone)
+•	Tabela: dbo.Klijenti
+o	Polja koja prikazuješ: NazivKlijenta, PIB, MaticniBroj, Zemlja, Grad, Adresa, Telefon, Email.
+o	CHECK ograničenja već postoje (PIB=9 cifara, Matični=8) — ne dozvoli unos koji to krši.
+•	Interno (za kasnije): KlijentObjekat (veze), Ugovor, Faktura (za agregate).
+5) Pravila & validacije
+•	Pretraga: LIKE na navedena polja, case-insensitive, trim.
+•	Sort: podrazumevano po NazivKlijenta ASC; dozvoli po PIB, Grad.
+•	Brisanje: samo ako nema referenci (Ugovori, RN, Fakture). Preporuka: deaktivacija umesto “hard delete” (potreban IsActive).
+•	Duplikati: ako korisnik doda novog sa već postojećim PIB → upozori i blokiraj potvrdu.
+6) Dozvole (po ulozi)
+•	Admin: sve.
+•	Komercijala: može kreirati/menjati, brisati (ili deaktivirati).
+•	Serviser/Finansije/Magacin/Viewer: read-only (nema Novi/Izmeni/Obriši).
+7) Greške & ivice
+•	Prazan rezultat: prikaži “Nema rezultata za zadate kriterijume”.
+•	Greška konekcije: “Sistem trenutno nije dostupan. Pokušajte ponovo.”
+•	Dugačak input u “Traži” → ograniči na npr. 120 znakova.
+8) Acceptance criteria (AC)
+1.	Traži filtrira po Nazivu/PIB/Matični/Email/Grad.
+2.	Sortiranje po Nazivu/PIB/Grad radi i kombinuje se sa filterom.
+3.	Paging (50 po strani) funkcioniše, prikazuje tačan Total.
+4.	Dvoklik/“Otvori” vodi na detalj izabranog klijenta.
+5.	Novi/Izmeni/Obriši dostupni samo ulogama koje imaju pravo.
+6.	Na pokušaj brisanja klijenta sa referencama — jasno upozorenje i zabrana.
+7.	UI ne dopušta PIB ≠ 9 cifara, niti Matični ≠ 8 cifara (pre slanja).
+8.	Prazna tabela prikazuje poruku, ne grešku.
+9) Test slučajevi (ručnim redom)
+•	T1: Unesi “belgrade” u Traži → vraća klijente sa Grad=Beograd (ili u Nazivu).
+•	T2: Sortiraj po PIB → redosled korektan.
+•	T3: Paging: idi na stranu 2, 3, nazad na 1 — radi.
+•	T4: Novi → upiši minimalno validno, sa PIB=9 cifara → pojavljuje se u listi.
+•	T5: Dvoklik na red otvara detalj.
+•	T6: Korisnik bez prava ne vidi dugmad za izmenu/brisanje.
+10) Razlaganje zadatka (za timove)
+•	UI tim: UserControl layout, stanja (loading/empty), paging komponente, komande.
+•	App/Service tim: metoda “get page” sa filterom/sortom/pagingom; validacije i provere duplikata PIB.
+•	QA: scenario pretrage, paging, prava.
+________________________________________
+Funkcija 3.2 — Detalj (tabovi)
+1) User story
+Kao korisnik želim karticu klijenta sa svim bitnim podacima i povezanim entitetima (kontakti, objekti, ugovori, finansije, aktivnosti), da bih upravljao odnosom sa klijentom.
+2) Opseg (UI & raspored)
+UserControl: KlijentiDetailView
+Levo “osnovna forma”, desno TabControl sa sekcijama.
+Tabovi (MVP):
+1.	Osnovno
+2.	Kontakti
+3.	Objekti
+4.	Ugovori
+5.	Finansije (pregled)
+6.	Aktivnosti
+Svaka sekcija ima toolbar: Dodaj/Izmeni/Obriši/Osveži (gde ima smisla). Izmene su “draft” dok korisnik ne klikne Sačuvaj (globalno ili po tabu, odlučite).
+3) Polja i pravila po tabu
+(1) Osnovno
+•	Polja:
+o	Naziv klijenta (obavezno, min 2 znaka)
+o	PIB (9 cifara)
+o	Matični broj (8 cifara, opciono)
+o	Zemlja, Grad, Adresa
+o	Telefon, Email (format)
+o	(Opc.) Aktivan (checkbox) — ako uvedeš kolonu
+•	Pravila:
+o	Pre snimanja validiraj PIB/Matični/Email format.
+o	Ako PIB kolidira sa postojećim → blokiraj i prikaži poruku.
+•	Ishod:
+o	INSERT/UPDATE dbo.Klijenti u skladu sa validacijom.
+(2) Kontakti
+•	Tabela kontakata (Ime, Prezime, Uloga, Email, Telefon, Primaran).
+•	Akcije:
+o	Dodaj kontakt (Kreiraj Kontakt, pa veži preko KontaktLink sa EntityType='Klijent' i EntityID=KlijentID; postavi UlogaID).
+o	Izmeni, Obriši vežu (ne moraš brisati kontakt karticu, samo Link).
+o	Postavi primarnog → Primaran=1 (jedinstveno po entitetu zahvaljujući unique indeksu).
+•	Pravila:
+o	Email format; opcija da jedan kontakt može biti linkovan na više entiteta (ok).
+•	Ishod:
+o	Ažuriran Kontakt, KontaktLink.
+(3) Objekti
+•	Lista objekata vezanih na klijenta (Naziv, Grad, Adresa).
+•	Akcije:
+o	Poveži postojeći objekat (pretraga po nazivu/grad → insert u KlijentObjekat).
+o	Novi objekat (otvara mini-wizard, po snimanju takođe veže u KlijentObjekat).
+o	Ukloni vezu (DELETE iz KlijentObjekat).
+•	Pravila:
+o	Onemogućiti duplu vezu (unique (KlijentID, ObjekatID) već postoji).
+•	Ishod:
+o	Ažuriran KlijentObjekat; opcionalno kreiran Objekat.
+(4) Ugovori
+•	Lista ugovora klijenta (Broj/Naziv, Period od-do, Status, Broj komora pokrivenih).
+•	Akcije:
+o	Otvori ugovor (navigacija na Ugovor detalj).
+o	Novi ugovor (otvara wizard iz Faze 5).
+•	Pravila:
+o	Prikaz samo aktivnih po default-u; filter “Svi”.
+•	Ishod:
+o	Nema direktnih izmena (osim navigacije); eventualno “quick create” ako želite.
+(5) Finansije (pregled)
+•	Read-only sažetak:
+o	Ukupno fakturisano, Plaćeno, Dug, Broj otvorenih faktura,
+o	Aging 0–30, 31–60, 61–90, 90+ (iz vFaktura_Stanje).
+•	Akcije:
+o	Link “Otvori fakture” (navigacija ka modulu Fakturisanje, filtrirano po klijentu).
+•	Pravila:
+o	Prikaz u valuti sistema (ili multi-valuta kasnije).
+•	Ishod:
+o	Nema izmene; služi za pregled.
+(6) Aktivnosti
+•	Lista aktivnosti (Tip, Naslov, DueAt, AssignedTo, Status DoneAt).
+•	Akcije:
+o	Nova aktivnost (beleška, poziv, podsetnik)
+o	Označi kao završenu (postavi DoneAt=now).
+•	Pravila:
+o	EntityType='Klijent', EntityID=KlijentID; validacija DueAt ≥ sada (za podsetnike).
+•	Ishod:
+o	Ažuriran Aktivnost.
+4) Dozvole
+•	Admin, Komercijala: mogu menjati Osnovno, Kontakti, veze sa Objektima.
+•	Serviser/Finansije/Magacin/Viewer: read-only prikaz; Aktivnosti → Serviser može dodati belešku/podsetnik po klijentu (po dogovoru).
+5) Stanja, čuvanje i zaštita nesačuvanih izmena
+•	Stanja: View, Edit, Creating.
+•	Pri napuštanju stranice sa izmenama — UnsavedChangesGuard (“Sačuvaj / Odbaci / Otkaži navigaciju”).
+•	Konkurentne izmene (ako uvedete RowVersion u Klijenti): na konflikt prikaži poruku i osveži.
+6) Greške & ivice
+•	Unos PIB/Matični pogrešne dužine → crvena validacija pored polja + tooltip.
+•	Uklanjanje veze sa Objektom koji ima aktivne ugovore → zabrani sa jasnom porukom.
+•	Brisanje kontakta koji je “primarni” → ili zabraniti, ili automatski ukloniti primarnost i dozvoliti brisanje.
+7) Acceptance criteria (AC)
+1.	Osnovno: čuvanje radi samo uz validan PIB/Matični i pravilno formatiran email; duplikat PIB blokira snimanje uz jasnu poruku.
+2.	Kontakti: dodavanje i postavljanje “primarni” uspeva; jedinstven primarni po klijentu je obezbeđen.
+3.	Objekti: povezivanje već postojećeg objekta i kreiranje novog rade; ne dozvoljava duplu vezu.
+4.	Ugovori: lista se prikazuje, “Otvori” vodi na detalj ugovora.
+5.	Finansije: prikazuje korektan dug i aging prema vFaktura_Stanje.
+6.	Aktivnosti: nova aktivnost sa DueAt u budućnosti se snima i pojavljuje na listi.
+7.	Dozvole: korisnik bez prava vidi read-only i nema dugmad za čuvanje/brisanje.
+8.	UnsavedChangesGuard: pri pokušaju napuštanja sa izmenama pojavljuje se potvrda.
+8) Test slučajevi (ručnim redom)
+•	D1: Izmena naziva i adrese → Sačuvaj → ponovo otvori, izmene prisutne.
+•	D2: Unesi PIB sa 8 cifara → poruka; ispravi na 9 → dozvoljen Save.
+•	D3: Dodaj kontakt bez emaila (dozvoljeno) i drugi sa Email → format validacija radi.
+•	D4: Postavi kontakt kao primaran → drugi pokušaj postavljanja drugog kao primaran → prvi više nije primaran (ili blokirano, prema odluci).
+•	D5: Poveži postojeći objekat i odmah pokušaj ponovo isti → zabranjeno dupliranje.
+•	D6: Aktivnost sa DueAt u prošlosti → validacija zabrani.
+•	D7: Korisnik bez prava pokuša da izmeni polje → kontrole disabled.
+9) Razlaganje zadatka (za timove)
+•	UI tim: TabControl layout, forme po tabu, validacioni vizuelni elementi, guard dijalog.
+•	App/Service tim: use-case servisi:
+o	Klijenti.GetById, Klijenti.Create, Klijenti.Update, Klijenti.ExistsByPIB
+o	Kontakti.ListByKlijent, Kontakti.Create/Update/Delete, KontaktLink.SetPrimary
+o	Objekti.ListByKlijent, KlijentObjekat.Link/Unlink, Objekti.QuickCreate
+o	Ugovori.ListByKlijent
+o	Finansije.GetKlijentOverview (sumarno iz vFaktura_Stanje)
+o	Aktivnosti.ListByKlijent, Aktivnosti.Create, Aktivnosti.MarkDone
+•	Security tim: primeni role matrix (edit lock) po tabu.
+•	QA: testovi iznad + test podaci (1 klijent bez objekata, 1 sa više ugovora, kontakti sa raznim ulogama).
+________________________________________
+Napomene / preporuke za dalje
+•	Razmisli da dodaš IsActive BIT i (kasnije) RowVersion ROWVERSION u Klijenti — olakšava “soft delete” i zaštitu od pregaženja izmena.
+•	Ako očekuješ >50k klijenata, uvedi server-side paging (već planirano) i minimalan indeks na NazivKlijenta (imamo u bazi za Objekti; za Klijente dodaj prema potrebi).
+•	Za Kontakte: ulistaj KontaktUloga kao lookup (već definisana).
+•	Za Finansije: jasna napomena da se iznos i aging oslanjaju na ispravan tok Faktura/Uplata (Faza 8).
+Faza 4 — OBJEKTI I KOMORE
+Funkcija 4.1 — Objekti (lista + detalj)
+1) User story
+Kao korisnik želim da evidentiram i održavam objekte (lokacije klijenta) i da ih povezujem sa klijentima, kako bih kasnije planirao servise, vodio RN i ugovore po lokaciji.
+2) Opseg (UI & raspored)
+UserControl: ObjektiMasterView (lista + pretraga) i ObjektiDetailView (detalj).
+•	Master (levo filteri + DataGrid):
+o	Traži (Naziv, Grad, Adresa, Email),
+o	filter po Zemlji/Gradu (opciono),
+o	paging (50/strana).
+•	Akcije: Novi, Izmeni, Obriši/Deaktiviraj, Osveži, Otvori.
+•	Detalj (desno/posebna stranica sa TabControl):
+1.	Osnovno: Naziv, Grad, Adresa, Zemlja, Telefon, Email, VlasnikObjekta, KorisnikUnosaObj/Datum (read-only), Latitude/Longitude.
+2.	Klijenti: lista povezanih klijenata (preko KlijentObjekat) + Dodaj/Skini vezu; označi “Primarni klijent” (opciono).
+3.	Komore: lista komora na objektu (link na Komora detalj).
+4.	Ugovori (read-only): ugovori koji pokrivaju ovaj objekat (preko veze ugovor–komora ili ugovor–objekat, zavisno od implementacije).
+5.	Aktivnosti: log i podsetnici za objekat.
+6.	Prilozi (opciono): fotografije, dokumenti (npr. plan objekta).
+3) Interakcije & stanja
+•	Validacija geo-koordinata: Latitude ∈ [-90, 90], Longitude ∈ [-180, 180] (u skladu sa CHECK u bazi).
+•	Ako korisnik popuni adresu i grad → (kasnije) geokodiranje (opciono), ali MVP ručni unos.
+•	Povezivanje sa klijentom: pretraga klijenta → Insert u KlijentObjekat; jedinstvena kombinacija (unique constraint već postoji).
+•	Deaktivacija: radije “IsActive” flag (ako uvedeš) nego delete; zabraniti brisanje ako postoje komore/ugovori/RN.
+4) Podaci (tabele/kolone)
+•	dbo.Objekti: Naziv_Objekta*, Grad, Adresa, Zemlja, TelefonKOsobe, EmailObjekta, Lokacija_Latitude, Lokacija_Longitude, Geo (computed), IsActive, CreatedAt, UpdatedAt.
+•	dbo.KlijentObjekat (N:N): KlijentID, ObjekatID, Uloga, Napomena, CreatedAt (+ unique na (KlijentID,ObjekatID)).
+5) Pravila & validacije
+•	Naziv objekta obavezan.
+•	Email format; telefon normalizovan (opciono).
+•	Geografija: ne dozvoliti snimanje “van opsega”.
+•	Veze na klijente: bez duplikata.
+•	Brisanje onemogućiti ako postoje komore ili aktivni ugovori.
+6) Dozvole
+•	Admin/Komercijala: create/edit veze na klijente.
+•	Serviser: read-only objekti; može dodati Aktivnost.
+•	Finansije/Magacin/Viewer: read-only.
+7) Acceptance criteria (AC)
+1.	Pretraga radi po Nazivu/Gradu/Adresu/Email; paging funkcioniše.
+2.	Snimanje detalja odbija neispravne lat/lon.
+3.	Povezivanje sa klijentom dodaje red u KlijentObjekat; duplikat je nemoguć.
+4.	Brisanje/Deaktivacija onemogućena ako postoje komore ili aktivni ugovori; prikazuje se jasna poruka.
+5.	Aktivnosti mogu biti dodate (ako uloga dozvoljava).
+8) Test slučajevi (ručnim redom)
+•	O1: Novi objekat sa validnim koordinatama → sačuvaj → pojavljuje se u listi.
+•	O2: Unesi Latitude=100 → validacija blokira.
+•	O3: Poveži objekat sa istim klijentom dva puta → drugi pokušaj odbijen.
+•	O4: Objekat sa komorom → pokušaj brisanja → odbijeno.
+•	O5: Serviser pokuša izmenu → polja disabled.
+________________________________________
+Funkcija 4.2 — Komore (lista + detalj)
+1) User story
+Kao korisnik želim da vidim i uređujem komore (sistemi na objektu), njihove serijske brojeve, statuse i datume (isporuka/pustanje u rad), i da planiram servis po komori.
+2) Opseg (UI & raspored)
+UserControl: KomoreMasterView i KomoraDetailView.
+•	Master:
+o	Filter: po Objektu, po Klijentu (ako ide kroz objekat), po statusu (StatusKK), po datumu pustanja (opseg).
+o	Traži: IdentKK, NazivKK, OznakaSistemaKK, SerijskiBrojKK.
+o	DataGrid: Ident, Naziv, Objekat, Grad, Status, DatumIsporuke, DatumPustanja.
+o	Paging.
+•	Detalj (tabovi):
+1.	Osnovno: IdentKK, NazivKK, TipKK, GrupaKK, status, količina (ako multipli), dimenzije (Š/V/D), protoci (EX/SU), sastavi (EX/SU), TežinaKK, SerijskiBrojKK, OznakaSistemaKK, napomena. Polja za Datume: Isporuka, Puštanje u rad.
+2.	Objekat: prikaz objekta i dugme “Promeni objekat” (re-assign).
+3.	Ugrađena oprema: lista iz Komora_Oprema (vidi 4.3).
+4.	Ugovori: ugovori koji pokrivaju ovu komoru (preko Ugovor_Komora ili posredno) — read-only lista + otvori.
+5.	Aktivnosti: log i podsetnici za komoru.
+6.	Prilozi: fotografije, nacrti (opciono).
+7.	Servis istorija (opciono): lista RN za ovu komoru (read-only).
+3) Interakcije & stanja
+•	Kreiranje komore u kontekstu objekta (preporučeno): u Masteru, odabereš objekat → “Nova komora”.
+•	Promena objekta (re-assign): dozvoli uz uslov:
+o	nema otvorenih RN za tu komoru, ili
+o	sistem odradi “migraciju” (zatvori RN ili prebaci RN na novi objekat) — MVP: zabraniti ako postoje otvoreni RN.
+•	Datumi: DatumIsporukeKK ≤ DatumPustanjaKK (ako oba postoje).
+•	Status deriviran ili ručno (MVP ručno).
+4) Podaci (tabele/kolone)
+•	dbo.Komore: polja koja već imaš (IdentKK, NazivKK, TipKK, dimenzije, protoci, serijski broj, datumi, ID_Objekta, status…).
+•	dbo.Objekti (FK ID_Objekta).
+•	(read-only) Ugovor_Komora ako postoji; ako ne, derivacija preko Ugovor→Komore.
+5) Pravila & validacije
+•	Obavezno: bar IdentKK ili NazivKK (odluči koje), Objekat mora biti postavljen.
+•	Serijski broj može biti prazan; ako postoji i želiš jedinstvenost, izdejstvovano je unique (filtered) u Komora_Oprema za ugrađene delove — ali ovde je SerijskiBrojKK komore (nije isto). Ako želiš jedinstven serijski broj komore u sistemu, uvedi unique na Komore(SerijskiBrojKK) WHERE SerijskiBrojKK IS NOT NULL.
+•	Datumi: logičan redosled (isporuka ≤ puštanje).
+•	Re-assign komore na drugi objekat: zabrani ako postoje otvoreni RN.
+6) Dozvole
+•	Admin/Serviser/Komercijala: dodavanje/izmena komora.
+•	Finansije/Magacin/Viewer: read-only.
+7) Acceptance criteria (AC)
+1.	Filtriranje i pretraga po Ident/Naziv/Serijski radi sa pagingom.
+2.	Kreiranje komore zahteva selektovan objekat ili izbor objekta u wizard-u.
+3.	Promena objekta komore je onemogućena ako postoje otvoreni RN; ako nema — uspešno ažuriranje.
+4.	Validacija datuma ne dozvoljava isporuku posle puštanja.
+5.	Detalj prikazuje listu ugovora (ako postoji pokrivenost) i aktivnosti.
+6.	Serviser može dodati Aktivnost na komoru.
+8) Test slučajevi
+•	K1: Kreiraj komoru za objekat A → prikaže se u listi filtriranoj po A.
+•	K2: Pokušaj re-assign na objekat B dok RN (status ≠ Završeno) postoji → poruka i zabrana.
+•	K3: Pretraga po serijskom → vraća odgovarajuće komore.
+•	K4: Unesi Pustanje < Isporuka → validacija blokira.
+________________________________________
+Funkcija 4.3 — Komora_Oprema (ugrađeni delovi)
+1) User story
+Kao serviser želim evidenciju ugrađenih delova/opreme na komori (sa serijskim brojevima i datumima ugradnje/demontaže), da bih znao istoriju i olakšao naručivanje zamena.
+2) Opseg (UI)
+UserControl (tab unutar KomoraDetailView): KomoraOpremaView
+•	Tabela: Oprema (šifra/naziv), SerijskiBroj, DatumUgradnje, DatumDemontaze, Napomena, Aktivan (izvedeno: DatumDemontaze IS NULL).
+•	Akcije:
+o	Dodaj ugrađenu opremu: bira se iz kataloga Oprema (za filtere: IsConsumable=1 ako je potrošni), unosi serijski i datume.
+o	Izmeni (ispravka serijskog i napomene).
+o	Demontiraj (postavi DatumDemontaze=now).
+o	Ponovno ugraditi (novi red sa novim datumom i eventualno drugim serijskim).
+3) Podaci (tabele/kolone)
+•	dbo.Komora_Oprema: ID (PK), KomoraID (FK), OpremaID (FK), SerijskiBroj NVARCHAR(100) NULL, DatumUgradnje DATETIME2 NOT NULL, DatumDemontaze DATETIME2 NULL, Napomena NVARCHAR(300) NULL, CreatedAt.
+•	Unique filter (ako želiš): UNIQUE (KomoraID, OpremaID, SerijskiBroj) WHERE SerijskiBroj IS NOT NULL (već smo pominjali konflikt sa imenom — koristi npr. UX_KomoraOprema_Ser).
+4) Pravila & validacije
+•	DatumUgradnje ≤ DatumDemontaze (ako demontaža postoji).
+•	Ne dozvoli upis duplog aktivnog reda za isti (KomoraID, OpremaID, isti Serijski) bez demontaže prethodnog.
+•	Serijski nije obavezan (za generičke delove), ali ako se unese, jedinstvenost po komori/komponenti.
+•	Brisanje: ne brisati istoriju, već demontirati (audit).
+5) Dozvole
+•	Admin/Serviser: dodaj/izmeni/demontiraj.
+•	Ostali: read-only.
+6) Acceptance criteria (AC)
+1.	Dodavanje ugrađene opreme zahteva izbor iz kataloga Oprema i DatumUgradnje.
+2.	Ako se pokuša opet ista kombinacija sa istim serijskim i bez demontaže — odbijeno.
+3.	Demontaža postavlja DatumDemontaze i čini stavku neaktivnom.
+4.	Istorijski pregled (sa i bez demontiranih) može da se filtrira.
+7) Test slučajevi
+•	KO1: Dodaj deo sa serijskim S1 → vidi se kao aktivan.
+•	KO2: Pokušaj dodati opet isti deo sa S1 bez demontaže → odbijeno.
+•	KO3: Demontiraj → status postaje neaktivan, može se dodati novi sa S2.
+•	KO4: Unesi DatumDemontaze < DatumUgradnje → validacija blokira.
+________________________________________
+(Opciono) Funkcija 4.4 — Mapa objekata/komora
+1) User story
+Kao planer želim mapu sa pinovima objekata (i brojem komora), da bih brže planirao rute i servise.
+2) Opseg (UI)
+•	Panel sa mapom (Bing/Leaflet/Google; zavisno od licence), pinovi za Objekti sa clusternig.
+•	Klik na pin → popup: Naziv objekta, Grad, broj komora, link “Otvori objekat”.
+•	Filteri: Klijent, Grad, Služba (opciono).
+3) Podaci
+•	Uzimaju se iz Objekti (Latitude/Longitude).
+•	Broj komora po objektu (COUNT iz Komore).
+4) AC
+•	Pinovi prikazani za one sa koordinatama.
+•	Klik vodi na ObjektiDetailView.
+________________________________________
+Raspodela zadataka po timovima
+•	UI tim – Objekti: Master/Detail layout, validacije geokoordinata, povezivanje klijenata, empty/loader states.
+•	UI tim – Komore: Master filteri, detalj sa tabovima (ugovori read-only, aktivnosti, prilozi), dijalog za re-assign.
+•	UI tim – Komora_Oprema: tabela, formular dodavanja/demontaže, filter aktivno/sve.
+•	App/Service tim: CRUD servisi za Objekte/Komore, KlijentObjekat.Link/Unlink, provera otvorenih RN pre re-assign, listanje ugovora po komori/objektu.
+•	Security tim: prava po ulozi (edit vs read-only); zaštita “delete” operacija.
+•	QA: test planovi iznad + seed podaci (po jedan objekat bez komora, jedan sa više; komore u različitim statusima).
+________________________________________
+Napomene & preporuke
+•	Razmotri IsActive kolonu i za Objekti (već je tu) i za Komore (ako želiš “gašenje” bez brisanja).
+•	Ako planiraš QR kodove/etikete za komore — rezerviši polje LabelCode i dodaj akciju “Štampaj etiketu”.
+•	Ako kasnije uvodiš magacin i serijalizaciju delova, Komora_Oprema se prirodno naslanja na izdatnice/primke.
+
+
+Faza 5 — UGOVORI (FunctionSpec)
+Pregled
+Ugovor definiše opseg (koji klijent/objekti/komore), trajanje, SLA, cenovnik/obračun, model naplate i plan preventive. Sav kasniji rad (RN, kalendar, fakture) oslanja se na ugovor ili (ređe) ide ad-hoc.
+________________________________________
+Funkcija 5.1 — Kreiranje ugovora (Wizard)
+1) User story
+Kao komercijalista/administrator, želim vođen proces kreiranja ugovora da bih bez greške definisao opseg, SLA, cene i naplatu.
+2) UI & Koraci (wizard)
+Korak 1: Klijent & naziv
+•	Polja: Klijent (obavezno), Interni naziv/šifra ugovora (obavezno), Opis (opciono).
+•	(Opc.) Kontakt kupca (primarni iz Klijent/Kontakti).
+Korak 2: Opseg (Scope)
+•	Izbor: po objektu i/ili po komorama.
+•	Grid 1: Objekti klijenta (checkbox “Uključi ceo objekat”).
+•	Grid 2: Komore na izabranim objektima (checkbox po komori).
+•	Pravilo: bar jedna komora ili ceo objekat mora biti odabrano.
+Korak 3: Trajanje & status
+•	Datum od / do (obavezno).
+•	Automatsko produženje (da/ne; period u mesecima).
+•	Status: Draft → Active (po završetku wizard-a ili ručnim “Aktiviraj”).
+•	(Opc.) Valuta ugovora; default PDV šifra/stopa.
+Korak 4: SLA
+•	Radno vreme (npr. 08–16, pon–pet).
+•	Response time (npr. 4h/8h/Next biz day).
+•	On-site time (npr. 24h/48h).
+•	Eskalacije (opciono).
+•	(Opc.) Penali/bonusi — samo kao polja za info; računanje kasnije.
+Korak 5: Cenovnik & popusti
+•	Satnice: Serviser, Inženjer, Dodatna tarifa (vikend/noć/vanredni).
+•	Putni troškovi: km, putarina, parking, smeštaj (po noći).
+•	Dnevnice: Serviser, Inženjer.
+•	Rabat: % na opremu/potrošni materijal (posebno).
+•	Oprema/Filteri: override cene (po artiklu) — dodavanje u tabelu ugovornog cenovnika (fallback: Oprema_Cenovnik sistemski).
+•	Pravilo preklapanja: Ugovor_Cenovnik > Oprema_Cenovnik > ručni unos u RN (ako dozvoljeno).
+Korak 6: Naplata (Billing model)
+•	Model:
+o	T&M (sati + materijal + troškovi)
+o	Paušal (subscription) — mesečna naknada + šta je uključeno (npr. X sati preventive)
+o	Fiksni paket (milestone/po događaju), ili Mešani
+•	Fakturisanje: po RN / mesečno / kvartalno.
+•	Rok plaćanja (valuta dana): npr. 30 dana.
+•	(Opc.) Avans/garancija, indeksacija.
+Korak 7: Pregled & potvrda
+•	Rezime opsega, SLA, cenovnika i billing-a.
+•	Dugme Sačuvaj kao Draft ili Aktiviraj (ako su sva obavezna popunjena).
+3) Pravila & Validacije
+•	Unikatna šifra/naziv ugovora po klijentu (preporučeno).
+•	Datumi: DatumOd ≤ DatumDo.
+•	Opseg: mora postojati bar jedna komora ili označen “ceo objekat”.
+•	SLA vrednosti unutar razumnog opsega (response/onsite > 0).
+•	Ako je model Paušal: mora biti definisana mesečna naknada.
+•	Aktiviranje zabranjeno dok validacije nisu prošle.
+4) Ishodi (persistencija)
+•	Novi red u Ugovor (status Draft/Active).
+•	Zapis u Ugovor_Komora (ili Ugovor_Objekat + izvedene komore) prema izboru iz opsega.
+•	Zapis u Ugovor_SLA (kontraktnI SLA parametri).
+•	Zapis(i) u Ugovor_Cenovnik (sve override stavke).
+•	(Opc.) Ugovor_Billing – model, periodika, rokovi.
+5) Acceptance criteria (AC)
+1.	Wizard ne dozvoljava prelazak na sledeći korak bez ključnih polja.
+2.	Aktivacija moguća samo kad je opseg, trajanje, SLA i billing kompletan.
+3.	Ugovor Active → vidljiv u RN kreiranju i kalendaru preventive.
+4.	Ugovor Draft → ne pojavljuje se u izboru pri kreiranju RN.
+5.	Čuvanje kreira sve povezane zapise (SLA, cenovnik, opseg).
+6) Testovi (ručnim redom)
+•	W1: Kreiraj Draft bez SLA → ne može Aktivirati.
+•	W2: Dodaj opseg sa 2 komore → posle snimanja Ugovor_Komora ima 2 reda.
+•	W3: Model Paušal bez mesečne naknade → validacija blokira.
+•	W4: Aktiviraj → dostupno u RN (dropdown ugovora).
+________________________________________
+Funkcija 5.2 — Detalj ugovora (tabs + lifecycle)
+1) User story
+Kao komercijalista/administrator, želim detaljnu karticu ugovora da bih menjao dozvoljena polja, video stanje i istoriju/ane kse.
+2) UI (tabs)
+1.	Pregled: osnovni podaci, status, datumi, klijent, valuta, PDV. Brze akcije: Aktiviraj/Deaktiviraj/Završi (Expire).
+2.	Opseg: objekti i komore obuhvaćene ugovorom (dodaj/ukloni — uz pravila).
+3.	SLA: prikaz i izmena ugovornog SLA (vidi pravila verzionisanja).
+4.	Cenovnik: pregled override stavki + dodavanje/izmena.
+5.	Preventiva: definicije učestalosti i plan generisanja (vidi 5.4).
+6.	Billing: model naplate, rokovi, periodika, paušalna naknada.
+7.	Finansije: sumari (fakturisano/plaćeno/dug) za ovaj ugovor; otvorene fakture.
+8.	RN: lista RN vezanih na ugovor (statusi, iznosi).
+9.	Anekse/Revizije: istorija promena ključnih polja (SLA, cene, opseg).
+10.	Dokumenti: prikači PDF ugovora, aneksa, itd.
+11.	Aktivnosti: beleške i podsetnici.
+3) Lifecycle (statusi & pravila)
+•	Draft → Active → Suspended (pauza) → Expired (istek datuma) → Terminated (raskid).
+•	Aktivacija: validacije kompletne (vidi gore).
+•	Suspendovan: RN kreiranje upozorava ili zabranjuje (konfigurisano).
+•	Expired: posle DatumDo; RN kreiranje zabranjeno osim ako “dozvoli rad mimo ugovora”.
+•	Aneks: svaka promena SLA/cena/opsega → kreira Ugovor_Aneks (broj, datum) + verziona polja; stari RN ostaju sa starim snapshot-om.
+4) Dozvole
+•	Admin/Komercijala: edit; Aktiviraj/Deaktiviraj; kreiranje aneksa.
+•	Serviser: read-only; može dodati Aktivnost.
+•	Finansije: edit Billing/Cenovnik (u dogovoru); ostalo read-only.
+5) Acceptance criteria (AC)
+1.	Ugovor Active ne dozvoljava brisanje (samo zatvaranje/terminate).
+2.	Uklanjanje komore iz opsega je zabranjeno ako postoje otvoreni RN za tu komoru pod ovim ugovorom (jasna poruka).
+3.	Promena SLA/cena ide kroz Aneks; stari RN ostaju vezani na snapshot.
+4.	Dokumenti su prikačeni i listaju se.
+6) Testovi
+•	D1: Aktiviraj ugovor → kreiraj RN → RN vidi ugovor i uzima SLA/cene.
+•	D2: Izmeni SLA kroz aneks → novi RN dobijaju novi snapshot, stari ostaju stari.
+•	D3: Ukloni komoru iz opsega dok RN otvoren → zabranjeno.
+________________________________________
+Funkcija 5.3 — Ugovor_Cenovnik (override cenovnik)
+1) User story
+Kao komercijalista/finansije želim po ugovoru da definišem satnice, troškove i cene artikala (oprema/filteri) koje imaju prednost nad sistemskim cenovnikom.
+2) Pravila
+•	Polja:
+o	Satnice: CenaSat_Serviser, CenaSat_Inzenjer, (vikend/noć multiplikatori ili posebne cene).
+o	Putni troškovi: CenaKm, Putarina, Parking, Smestaj_Noć.
+o	Dnevnice: Dnevnica_Serviser, Dnevnica_Inzenjer.
+o	Artikli: lista (OpremaID, Cena, PopustPct?, Valuta?).
+•	Preklapanje: Ugovor_Cenovnik > Oprema_Cenovnik > RN ručno (ako ručno dozvoljeno).
+•	Valuta: ako ugovor koristi drugu valutu → čuvaj cenu + valutu; RN snapshot pretvara po kursu dana (ako radite multi-valutu).
+3) AC
+•	RN Stavke dobijaju tačne cene iz Ugovor_Cenovnik.
+•	Ako override ne postoji → sistemski cenovnik; ako ni to → ručni unos (uz upozorenje).
+4) Testovi
+•	C1: Stavka opreme iz ugovornog override → primeni ugovornu cenu.
+•	C2: Stavka opreme bez override → primeni sistemsku.
+•	C3: Ručni unos cene dozvoljen samo sa potvrdom (policy).
+________________________________________
+Funkcija 5.4 — Preventiva (učestalosti & planiranje)
+1) User story
+Kao planer, želim da definišem koliko često ide preventiva po komori i da sistem automatski generiše planirane RN u kalendaru.
+2) Pravila
+•	Na tabu Preventiva: tabela komora iz opsega sa poljima:
+o	Učestalost: mesečno/kvartalno/polugodišnje/godišnje ili n x godišnje.
+o	Sledeći planirani datum (može ručno pomeranje).
+o	Tag “obavezno uz prisustvo inženjera” (ako ta tarifa treba).
+•	Generator plana:
+o	Kreira KalendarTermin i RN (Draft) za narednih n meseci (npr. 6).
+o	Izbegava vikende (opcija), pomera na prvi radni dan.
+o	Regeneracija: već kreirane Draft RN se ažuriraju/pomeraju; odobreni/aktivni RN ne dirati.
+3) AC
+•	Nakon “Generiši plan” pojavljuju se termini/RN u predviđenim datumima.
+•	Pomeranje termina u kalendaru menja i planirani datum preventive.
+4) Testovi
+•	P1: Postavi kvartalno → dobij 4 termina u narednih 12 meseci.
+•	P2: Uključi “izbegni vikende” → termini padaju u radne dane.
+________________________________________
+Funkcija 5.5 — RN integracija (SLA snapshot & defaulti)
+1) Pravila
+•	Pri kreiranju RN sa ugovorom:
+o	Napuni RN.UgovorID.
+o	Upisi RN_SLA snapshot iz Ugovor_SLA (Response, OnSite, WorkingHours, Valuta, PDV).
+o	Setuj default cene (satnice/troškovi) iz Ugovor_Cenovnik u kontekst RN (ne menja se ugovor).
+•	Pri kreiranju RN bez ugovora:
+o	RN_SLA iz sistemskog defaulta ili prazno; cene iz Oprema_Cenovnik/ručno.
+2) AC
+•	RN (sa ugovorom) čuva snapshot tako da kasnije izmene ugovora ne utiču retroaktivno.
+________________________________________
+Funkcija 5.6 — Fakturisanje iz ugovora (billing rules)
+1) Pravila
+•	T&M: faktura iz RN_Stavka pogleda (sati, materijal, troškovi).
+•	Paušal: periodične fakture (npr. mesečno), opcija “uključuje X sati preventive”. Ako se pređe X → dodatno T&M.
+•	Fiksni paket: milestone fakture (ručno trigovane).
+•	Mešani: kombinacija gore navedenog.
+•	Rok plaćanja: računanje valute po Faktura.Datum + PaymentTerms.
+•	(Opc.) Ugovor_Avans: prelomi avansne račune.
+2) AC
+•	Generisanje fakture iz ugovora stvara tačne stavke i iznose.
+•	Za Paušal – faktura kreirana i bez RN (ako tako definišete).
+________________________________________
+Funkcija 5.7 — Anekse i verzionisanje
+1) Pravila
+•	Svaki put kad menjate SLA, cenovnik, opseg, billing na Active ugovoru:
+o	Kreira se Ugovor_Aneks (broj, datum, opis).
+o	Polja se kopiraju u novu verziju zapisa (Ugovor_SLA v2, Ugovor_Cenovnik v2…).
+•	RN snapshotovi ostaju na vrednostima u trenutku kreiranja RN.
+2) AC
+•	Pregled aneksa pokazuje istoriju (vreme, autor, opis), i koji RN “pripadaju” kojoj verziji (po datumu).
+________________________________________
+Minimalni model (bez SQL, samo imenovanje polja)
+Ako neke tabele još nisu napravljene, ovo je spisak potreba (tim DB napravi prema naming standardu).
+•	Ugovor: ID, KlijentID, Naziv, Opis, DatumOd, DatumDo, AutoRenew (bit), AutoRenewMonths, Status, Valuta, PDV_Default, CreatedAt, UpdatedAt
+•	Ugovor_Komora (ili Ugovor_Objekat + izvedeno): ID, UgovorID, KomoraID, CreatedAt (unique UgovorID+KomoraID)
+•	Ugovor_SLA: ID, UgovorID, WorkingHours_From, WorkingHours_To, WorkDaysMask, ResponseHours, OnSiteHours, EscalationJson, CreatedAt, Version
+•	Ugovor_Cenovnik: ID, UgovorID, CenaSat_Serviser, CenaSat_Inzenjer, MultVikend, MultNoc, CenaKm, Putarina, Parking, Smestaj_Noc, Dnev_Serviser, Dnev_Inzenjer, Valuta, CreatedAt, Version
+•	Ugovor_Cenovnik_Stavka: ID, UgovorID, OpremaID, Cena, PopustPct, Valuta, CreatedAt, Version
+•	Ugovor_Billing: ID, UgovorID, Model (T&M/Pausal/Fiks/Mixed), Periodika (mes/kv/...), PaušalIznos, PaymentTermsDays, CreatedAt, Version
+•	Ugovor_Aneks: ID, UgovorID, Broj, Datum, Opis, CreatedAt
+(Već imate RN_SLA, RN_Stavka pogled i osnovne RN tabele — ovo se samo nadovezuje.)
+________________________________________
+Dozvole (sažetak)
+•	Admin/Komercijala: sve na ugovoru.
+•	Finansije: Billing & Cenovnik (po dogovoru edit); ostalo read-only.
+•	Serviser: read-only + Akt. (beleške).
+•	Viewer/Magacin: read-only.
+________________________________________
+Završni AC za Fazу 5
+1.	Kreiran i aktiviran ugovor čuva opseg, SLA i cenovnik i vidljiv je u RN.
+2.	RN sa ugovorom dobija SLA snapshot i cenovne default-e iz ugovora.
+3.	Preventiva generiše planirane termine i Draft RN.
+4.	Iz ugovora se mogu generisati fakture prema definisanom modelu.
+5.	Promene na aktivnom ugovoru idu kroz Aneks i ne utiču retroaktivno na postojeće RN.
+________________________________________
+Podela po timovima
+•	UI/UX: Wizard + Detail tabs, validacije i guard-ovi.
+•	App/Services: UgovorService (Create/Activate/Amend/Aneks), PreventivaPlanner, BillingService.
+•	DB: tabele Ugovor_*, indeksi, FK, view-ovi za opseg i finansijske izvode.
+•	QA: skripte za seed podataka, scenario testovi iz AC.
+Faza 6 — RADNI NALOZI
+6.1 Kreiranje RN (ad-hoc ili iz ugovora/kalendar termina)
+User story
+Kao operativa, želim da kreiram RN (iz ugovora, iz kalendara preventive ili ad-hoc) sa osnovnim metapodacima i SLA snapshot-om.
+UI (UserControl: RNCreateView)
+•	Izvori: Ad-hoc / Iz ugovora / Iz termina.
+•	Polja (obavezno*):
+o	Tip usluge (lookup), Prioritet (lookup)
+o	Klijent → Objekat → (opciono) Komora
+o	Ugovor (opciono; obavezno ako je “iz ugovora”)
+o	Kratak opis, Opis
+o	Planirani početak/kraj (preuzet ako je “iz termina”)
+o	Vodeći serviser (assign lead)
+•	Auto: Broj RN, Datum kreiranja, Status=Draft.
+Pravila
+•	Ako je odabran Ugovor: mora biti Active i da pokriva izabranu komoru/objekat.
+•	Na snimanje: upis RN_SLA snapshot iz Ugovor_SLA (ako ugovor postoji), u suprotnom iz sistemskog defaulta.
+•	Default cene (satnice/troškovi) za ovaj RN se “zakače” iz Ugovor_Cenovnik (bez menjanja ugovora).
+•	Ako postoji povezan KalendarTermin: veži KalendarTerminID (FK).
+Ishodi (podatci)
+•	RadniNalog: meta (klijent/objekat/komora/tip/prioritet/status/lead/planirani slot).
+•	RN_SLA: WorkingHours, ResponseHours, OnSiteHours, Valuta/PDV (snapshot).
+•	(Opc.) RN_DefaultCene / ili polja u RN za “podrazumevane cene”.
+Acceptance criteria (AC)
+1.	RN se može kreirati u tri režima (ad-hoc/ugovor/termin).
+2.	Ako ugovor ne pokriva opseg → blokiraj sa jasnom porukom.
+3.	RN_SLA snapshot nastaje pri snimanju i više se ne menja automatski.
+4.	Status RN = Draft.
+Testovi
+•	C1: Kreiraj iz ugovora → snapshot popunjen; ugovor Active.
+•	C2: Iz termina → planirani slot i lead preuzeti iz termina.
+•	C3: Ugovor Expired → zabrana, poruka.
+________________________________________
+6.2 Dodela i planiranje (dispatch)
+User story
+Kao planer, želim da dodelim servisere i rezervišem termin, bez konflikta u kalendaru.
+UI (RNAssignView)
+•	Odabir jednog ili više servisera (lista korisnika Role=Serviser).
+•	Predlog termina (kalendar; drag&drop).
+•	Prikaz zauzeća servisera (read-only agenda).
+Pravila
+•	Anti-overlap: isti serviser ne može imati dva aktivna termina koji se preklapaju (hard blok ili upozorenje po konfiguraciji).
+•	Promena termina RN bi trebalo da sinhronizuje povezani KalendarTermin.
+AC
+1.	Dodela uspeva ako nema konflikta.
+2.	Izmena termina u RN ažurira i KalendarTermin.
+Testovi
+•	A1: Dodeli 2 servisera, različiti termini → OK.
+•	A2: Pokušaj dupli termin istom serviseru → blokirano (ili upozorenje, po podešavanju).
+________________________________________
+6.3 Rad na RN — sati (rad), materijal, oprema
+User story
+Kao serviser, želim da evidentiram sate po osobi, materijal/opremu i napomene, da bi se kasnije obračunalo i fakturisalo.
+UI (RNWorkView – tabovi)
+•	Rad (sati): lista stavki (Serviser, Datum, Od-Do ili Sati, Vrsta rada: standard/vanredno/vikend/noć, Opis).
+•	Materijal/Oprema: stavke (OpremaID ili ručni opis, Količina, JM, Cena/Popust*; ako nema cene → fallback).
+•	(po dogovoru) Potrošni (filteri) su takođe “Oprema” (IsConsumable=1).
+•	Napomene: slobodan tekst + check-list (opciono).
+Pravila
+•	Satnice: ako RN ima ugovor → primeni ugovorne satnice (po vrsti rada); inače sistemske.
+•	Cena artikla: prioritet Ugovor_Cenovnik > Oprema_Cenovnik > ručno (ručno uz potvrdu).
+•	Validacije: Količina > 0; negative nisu dozvoljene (povrat se evidentira kao zasebna stavka sa negativnom količinom samo ako to proces predviđa).
+•	Ako je Komora zadana u RN: dozvoljena pomoćna veza stavki na tu Komoru (za istoriju).
+Ishodi (tabele)
+•	RN_Rad: (RNID, ServiserID, Datum, Sati ili Od/Do, VrstaRada, CenaSatSnapshot, Iznos).
+•	RN_Materijal: (RNID, OpremaID? / Opis, Količina, JM, CenaSnapshot, PopustPct, Iznos).
+•	(Pogled) vRN_Stavka = union rad + materijal + (vidi 6.4 troškovi) — već ste birali opcija B (view).
+AC
+1.	Dodavanje sati i materijala automatski računa iznose po snapshot cenama.
+2.	Ako ne postoji cena ni na ugovoru ni sistemska → dopušten ručni unos uz upozorenje.
+3.	Sati moraju imati ServiserID i Datum.
+4.	Sve izmene su vidljive u zbiru RN rezimea.
+Testovi
+•	W1: Rad (2h standard + 1h vikend) obračunava dve cene.
+•	W2: Materijal “Filter X” bez override → uzima sistemsku; sa override → uzima ugovornu.
+•	W3: Pokušaj količina 0 → odbijeno.
+________________________________________
+6.4 Troškovi RN (put, smeštaj, dnevnica, km…)
+User story
+Kao serviser, želim da unesem stvarne troškove vezane za RN.
+UI (RNExpensesView)
+•	Lista troškova: Tip (Km/Putarina/Parking/Smestaj/Dnevnica_Serviser/Dnevnica_Inzenjer/Ostalo), Kolicina, CenaJedinicna (može doći iz RN defaulta), Opis.
+•	Iznos = Količina × CenaJedinicna (computed/persisted).
+Pravila
+•	Tipovi ograničeni CHECK-om (već imate CK_RNT_Tip).
+•	Cene default iz ugovora ako postoji; inače sistemske.
+Ishodi
+•	RN_Trosak (kao što imate).
+AC
+1.	Lista troškova sabira se u rezime RN.
+2.	Važe default cene po ugovoru ako postoje.
+Testovi
+•	E1: Dnevnica_Serviser × 2 → ispravan iznos.
+•	E2: Tip “Km” sa 120 km → primeni dogovorenu cenu po km.
+________________________________________
+6.5 Prilozi, aktivnosti, istorija statusa
+User story
+Kao tim, želimo da priložimo fotografije i dokumente, vodimo komunikacioni log i vidimo istoriju statusa.
+UI (RNFilesActivitiesView)
+•	Prilozi: dodavanje/brisanje, pregled (slike/pdf).
+•	Aktivnosti: Tip (beleška/poziv/mail), Naslov, DueAt, AssignedTo, DoneAt.
+•	Status history: vremenska linija (Status, Ko, Kada, Napomena).
+Pravila
+•	Upload ograničen veličinom/formatima (konfig).
+•	Aktivnosti: DueAt ne sme u prošlost (za podsetnik).
+•	Status history auto-upis pri svakoj promeni statusa RN.
+Ishodi
+•	RN_Prilozi, Aktivnost (EntityType='RN', EntityID), RN_StatusHistory.
+AC
+1.	Prilog vidljiv i otvarljiv.
+2.	Aktivnost sa DueAt u budućnosti se prikazuje u notifikacijama korisniku.
+3.	Svaka promena statusa se beleži.
+Testovi
+•	F1: Dodaj 3 slike → pregled radi.
+•	F2: Markiraj aktivnost DoneAt → nestaje sa liste otvorenih.
+________________________________________
+6.6 Statusni tok (workflow) i odobrenje
+User story
+Kao organizacija, želimo standardni lifecycle RN i kontrolisano odobravanje pre fakturisanja.
+Statusi (predlog)
+Draft → Planiran → Na terenu → ČekaDelove → Završeno (tehnički) → Predato (na odobrenje) → Odobreno → Fakturisano → Stornirano/Odbijeno.
+(“Pauza” kao pomoćni).
+Pravila
+•	Prelazi:
+o	Draft → Planiran (zahteva dodeljen termin i bar jednog servisera)
+o	Planiran → Na terenu (start rada)
+o	Na terenu → Završeno (svi sati/materijal uneseni)
+o	Završeno → Predato (zaključaj stavke za izmenu, osim od strane Admina)
+o	Predato → Odobreno (kontrola kvaliteta/komercijala)
+o	Odobreno → Fakturisano (kreiran zapis u Faktura/Faktura_Stavka)
+•	“ČekaDelove” se koristi kad je potreban vanredni materijal; povratak u “Planiran/Na terenu” posle dopune.
+•	Pravilo zatvaranja: pre “Predato” mora postojati bar 1 stavka rada ili materijala/troška, i popunjen sažetak.
+AC
+1.	Ne može u “Predato” bez unosa rada/materijala/troškova.
+2.	“Predato” zaključava stavke (osim Admin override).
+3.	“Odobreno” otključava dugme “Generiši fakturu”.
+Testovi
+•	WF1: Pokušaj Predato bez stavki → upozorenje i zabrana.
+•	WF2: Admin može “vratiti” RN iz Predato u Na terenu (audit).
+•	WF3: Odobreno → napraviti fakturu → RN prelazi u Fakturisano.
+________________________________________
+6.7 SLA praćenje i KPI
+User story
+Kao menadžer, želim da vidim da li su ispoštovani response i on-site SLA iz RN snapshot-a.
+Pravila
+•	ResponseTime = vreme od kreiranja RN (ili od prijave incidenta) do prelaska u status “Planiran” ili “Na terenu” (po definiciji).
+•	OnSiteTime = vreme do prvog “Na terenu” (prvi check-in).
+•	Radni kalendar (WorkingHours + WorkDaysMask) iz RN_SLA definiše “biznis sate”.
+•	RN čuva polja: SLA_ResponseMet BIT, SLA_OnSiteMet BIT, SLA_Notes.
+UI (RNSLAView)
+•	Prikaz ciljeva i stvarnih vremena, metrika ✓/✗.
+•	Razlog promašaja (šifrarnik) — obavezno ako je ✗.
+AC
+1.	SLA metrika se izračunava prema snapshot-u, ne trenutnom ugovoru.
+2.	Ako ciljevi nisu ispunjeni, obavezan razlog.
+Testovi
+•	SLA1: Kreiran RN → “Na terenu” za 3h, target 4h → ✓.
+•	SLA2: On-site posle targeta → ✗ i unet razlog.
+________________________________________
+6.8 Fakturisanje iz RN
+User story
+Kao finansije, želim da iz jednog ili više RN generišem fakturu(e).
+Pravila
+•	RN mora biti Odobren za fakturisanje (ili policy-override).
+•	Izbor: Fakturisi ovaj RN ili Grupno fakturisanje (više RN istog klijenta/ugovora).
+•	Stavke fakture nastaju iz vRN_Stavka (rad + materijal + troškovi).
+•	PDV: prema kategoriji (usluga/materijal) i defaultu iz RN_SLA/ugovora.
+•	Rok plaćanja: iz ugovora/billing postavki.
+Ishodi
+•	Faktura + Faktura_Stavka (status Otvorena).
+•	RN status → Fakturisano (uz referencu na Fakturu).
+AC
+1.	Faktura sadrži sve stavke i tačne iznose.
+2.	RN prelazi u Fakturisano i ne može se menjati (osim kreditne note protokom procesa).
+Testovi
+•	FAK1: Jedan RN → jedna faktura, stavke korektne.
+•	FAK2: Dva RN istog klijenta → grupna faktura.
+________________________________________
+6.9 Otkazivanje / Razlozi / Garancija
+User story
+Kao operativa, želim da evidentiram otkazivanje i garancijske radove.
+Pravila
+•	Otkazivanje: status “Stornirano” zahteva RazlogID (lookup RazlogOtkazivanja) i napomenu.
+•	Garancija: RN može imati JeGarancija BIT i GarancijaRef (npr. broj komore/ugovora ili RMA).
+•	RMA/Reklamacija: zaseban modul (kasnije) — ovde samo flag i referenca.
+AC
+1.	Bez razloga nema storniranja.
+2.	Garancijski RN se izdvaja u izveštajima i ne ulazi u prihod (ako tako definišete).
+Testovi
+•	OT1: Pokušaj storno bez razloga → odbijeno.
+•	OT2: Garancija flag filtrira RN u izveštaju.
+________________________________________
+6.10 Rezime RN i izveštaji
+UI (RNOverview)
+•	Sažetak: zbir rada, materijala, troškova, PDV, ukupno.
+•	Linkovi: Faktura, Klijent, Ugovor, Komora.
+•	Print/PDF radnog naloga (potpis klijenta — “sign on glass” kasnije).
+Izveštaji (MVP)
+•	RN po statusu/serviseru/klijentu/periodu.
+•	SLA ispunjenost.
+•	Top potrošna oprema.
+•	RN → Fakturisano → Naplaćeno (pipeline).
+AC
+•	Rezime se poklapa sa stavkama.
+•	Izveštaji filtriraju i sortiraju predvidivo.
+________________________________________
+Dozvole (sažetak po RN)
+•	Admin: sve, override zaštita.
+•	Serviser: unos rada/materijala/troškova, prilozi, aktivnosti; menja status do “Završeno”; predaj na odobrenje.
+•	Komercijala: pregled/odobravanje; uređuje meta RN ako treba.
+•	Finansije: fakturisanje; read-only nad radnim stavkama.
+•	Viewer/Magacin: read-only.
+________________________________________
+Tehničke napomene (bez koda)
+•	Uvedi RowVersion (rowversion) na RadniNalog i stavke (optimistic concurrency).
+•	“Zaključavanje” RN pri Predato/Odobreno/Fakturisano — ili polje IsLocked BIT + policy.
+•	vRN_Stavka (pogled) se oslanja na RN_Rad, RN_Materijal, RN_Trosak (već imate RN_Trosak; dodajte RN_Rad ako nije kreiran).
+•	Indeksi: RadniNalog (KlijentID, Status, PlaniraniPocetak), RN_Rad (RNID, ServiserID, Datum), RN_Materijal (RNID, OpremaID).
+________________________________________
+Podela po timovima
+•	UI/UX: RNCreateView, RNAssignView, RNWorkView, RNExpensesView, RNFilesActivitiesView, RNSLAView, RNOverview.
+•	App/Services: RN lifecycle servis (status tranzicije + validacije), SLA kalkulator, cenovni resolver (Ugovor→Sistemski→Ručni), fakturisanje iz RN.
+•	DB: tabele RN_Rad, pogled vRN_Stavka, istorija statusa, indeksi; FK konzistencija.
+•	QA: scenario “end-to-end” (kreiraj→dodeli→unesi rad/materijal/troškove→predaj→odobri→fakturiši).
+Faza 7 — KALENDAR SERVISA
+7.1 Pogledi kalendara (Day/Week/Agenda/Board/Map)
+User story
+Kao planer/serviser, želim više pogleda na raspored (dnevni, nedeljni, agenda, tablo po serviserima i mapa) da vizuelno planiram rad.
+UI
+•	Day: vremenska osa 06–22 (konfig); jedan dan, više traka (po serviseru).
+•	Week: 7 dana, grupisano po serviseru (ili svi serviseri u jednoj “koloni” sa filterom).
+•	Agenda: lista termina u intervalu (filter: serviser, klijent, objekat, status).
+•	Board (kanban): kolone = status termina (Planiran/Tentativno/Potvrđen/…); kartice = termin.
+•	Map (opciono): pinovi objekata termina; cluster; klik → detalj termina/RN.
+Interakcije
+•	Drag & drop pomeranje termina (menja Start/End).
+•	Resize (menja trajanje).
+•	Drag iz “unassigned” liste na servisera (dodela).
+•	Multi-select + batch pomeranje (pomeri +1 dan, +1h, pomeri servisera).
+AC
+1.	Svi pogledi dele isti izvor podataka (termini u opsegu).
+2.	Drag/drop menja datume i radnika uz validacije (vidi 7.4).
+3.	Filteri se primenjuju bez reload-a aplikacije.
+Testovi
+•	D/W1: Pomeranje termina za 2h u future → uspešno.
+•	D/W2: Filter Serviser=A → vide se samo A-ovi termini.
+•	D/W3: Board: prebačen iz Tentativno u Potvrđen → status ažuriran.
+________________________________________
+7.2 Termin kalendara — kreiranje/izmena
+User story
+Kao planer, želim da kreiram/izmenim termin sa ključnim metapodacima i vezom na RN/ugovor.
+Polja termina
+•	Naslov (auto: Klijent – Objekat – Komora / RN#)
+•	Start, End (obavezno)
+•	Status (lookup: Tentativno/Planirano/Potvrđeno/U toku/Završeno/Otkazano/Odloženo/NoShow)
+•	Serviseri (1..n)
+•	Klijent, Objekat, Komora (FK)
+•	RN (opciono; ako postoji → polje read-only ili link)
+•	Ugovor (ako RN/ugovor veza postoji)
+•	Opis/napomena, Boja (po statusu/TipUsluge)
+•	Lokacija (adresni string; objekt → autofill)
+•	(opciono) Travel buffer pre/posle (min)
+Pravila
+•	Ako termin nastaje iz RN: preuzmi klijent/objekat/komoru, ne menjaš RN automatski osim planiranog vremena (vidi 7.6).
+•	Ako termin nastaje pre RN: može se kreirati “termin bez RN”; kasnije poveži ili generiši RN iz termina.
+•	Status “U toku” zahteva bar jednog servisera; “Završeno” zahteva zatvaranje vremena (check-out).
+AC
+1.	Obavezna polja (Start/End/Status).
+2.	Veza na RN čuva konzistentnost (RN i termin referišu jedno drugo).
+3.	“Termin bez RN” kasnije se može spojiti sa novim RN.
+Testovi
+•	T1: Kreiraj termin 10–12h, dodeli servisera → vidi se u kalendaru.
+•	T2: Kreiraj termin “bez RN” → kasnije klik “Kreiraj RN iz termina” → RN nastaje sa kopiranim metapodacima.
+________________________________________
+7.3 Dodela servisera i kapacitet
+User story
+Kao planer, želim da dodelim jednog ili više servisera, uz pregled zauzeća i radnog vremena.
+Pravila
+•	Dodavanje 1..n servisera po terminu (tabela many-to-many).
+•	Serviser ima radno vreme po danima (konfig), pauze (opciono), odsustva (vidi 7.8).
+•	Ako je termin van radnog vremena servisera → warning (dozvoli/odbaci po policy).
+•	“Lead serviser” (glavni) – flag.
+AC
+1.	Dodela servisera poštuje odsustva.
+2.	Lead je uvek jedan (ako više dodeljeno).
+Testovi
+•	A1: Serviser u godišnjem → pokušaj dodele → odbijeno uz poruku.
+•	A2: Dodeli 2 servisera, postavi lead → lead se ispravno čuva.
+________________________________________
+7.4 Detekcija konflikata (overlap, putno vreme, resursi)
+User story
+Kao planer, želim da izbegnem preklapanja termina i neizvodljive rute (npr. 2 termina zbijena bez vremena za put).
+Pravila
+•	Overlap: na istom serviseru termini ne smeju preklapati (hard blok) ili mogu uz potvrdu (soft – konfig).
+•	Putno vreme: ako oba termina imaju objekat sa koordinatama, izračunaj minimalni buffer (konfig: brzina ili integracija sa mapom kasnije). Ako nema dovoljno buffer-a → warning.
+•	Resursi: opcioni resursi (alat/vozilo) – jedan resurs ne može na dva termina (ako uvedete modul Resursi).
+AC
+1.	Snažna validacija: ne možeš snimiti termin koji preklapa postojećeg (hard režim).
+2.	Warning za putno vreme prikazuje preporučeni pomak.
+Testovi
+•	C1: Pomeranje termina preko već postojećeg → blokirano.
+•	C2: Dva udaljena objekta sa 15 min razmaka i policy 45 min buffer → warning.
+________________________________________
+7.5 Notifikacije i potvrde
+User story
+Kao serviser i kao kupac, želim da dobijem blagovremene obaveštaje i (po želji) potvrdim termin.
+Pravila
+•	Reminder servis: T-24h i T-2h notifikacije (konfig).
+•	Kanali: u aplikaciji, email (opciono), SMS (opciono).
+•	Customer confirmation: link “Potvrdi/Predloži novi termin” (ako uvedete web-endpoint; MVP: ručno polje “Potvrđeno od klijenta”).
+•	Escalacija: ako Planirano bez dodeljenog servisera < T-24h → ping planerima.
+AC
+1.	Serviser dobija notifikaciju pri dodeli i pred termin (T-24/T-2).
+2.	Planer vidi status potvrde od klijenta (ručno ili automatski).
+Testovi
+•	N1: Dodela serviseru → generiše se obaveštenje “Novi termin”.
+•	N2: Menjaš vreme → “Termin izmenjen” obaveštenje se šalje dodeljenima.
+________________________________________
+7.6 Veza sa RN (sinhronizacija)
+User story
+Kao operativa, želim da promena termina ažurira planirane datume RN i da početak/završetak rada reflektuju status RN.
+Pravila
+•	Ako termin ima RN:
+o	Promena Start/End → ažurira RN.PlaniraniPocetak/Kraj.
+o	Status “U toku” (check-in) → RN → “Na terenu”.
+o	Status “Završeno” (check-out) → RN → “Završeno (tehnički)” (ili pređe u “Predato” po policy).
+•	Ako RN nema termin: kreiran iz RN → automatski pravi termin sa istim planiranim vremenom (opciono).
+AC
+1.	Jednosmerna pravila jasno definisana (iz kalendara → RN planirani).
+2.	Check-in/out termin menja RN status po workflow pravilima (vidi Faza 6.6).
+Testovi
+•	R1: Pomeranje termina +2h → RN.PlaniraniPocetak pomeren +2h.
+•	R2: “Start” na terminu → RN u “Na terenu”.
+•	R3: “Završetak” → RN u “Završeno (teh.)”.
+________________________________________
+7.7 Preventiva → generisanje termina
+User story
+Kao planer, želim automatsko generisanje termina iz ugovorne preventive (vidi Faza 5.4).
+Pravila
+•	Periodičnost po komori (n x godišnje / obrasci).
+•	Generator kreira KalendarTermin (status=Planirano) + Draft RN (ako je politika “plan kreira RN”).
+•	Izbegni vikende (konfig), pomeri na prvi radni dan.
+•	Bulk pomeranje (npr. “praznici”): odaberi opseg i shiftuj celokupan plan.
+AC
+1.	“Generiši za narednih N meseci” stvara očekivan broj termina.
+2.	Pomeranje jednog termina rekalibriše samo taj termin (ne regeneriše sve).
+Testovi
+•	P1: Komora kvartalno; generiši 12 meseci → 4 termina.
+•	P2: “Izbegni vikende” → termini radnim danima.
+________________________________________
+7.8 Odsustva i radni kalendar
+User story
+Kao planer, želim evidenciju odsustava (godišnji/bolovanje/obuka) i radnih kalendara po serviseru.
+Pravila
+•	Serviser_OutOfOffice: od–do + tip (godišnji, bolovanje, obuka).
+•	Work schedule po serviseru: default 08–16 pon–pet (moguće izuzetno radno vreme).
+•	Termin ne sme pasti u OOO period (hard blok).
+AC
+1.	Kreiranje termina u OOO interval → zabranjeno sa objašnjenjem.
+2.	U UI prikaz “crvenih traka” za OOO.
+Testovi
+•	OOO1: OOO 1–5 avg → pokušaj 3. avg → odbijeno.
+________________________________________
+7.9 Izveštaji kalendara i produktivnost
+User story
+Kao menadžer, želim izveštaje o opterećenju i ispunjenosti.
+Izveštaji
+•	Iskorišćenost po serviseru: planirani sati vs. radni sati.
+•	No-show/otkazivanja po razlozima.
+•	SLA on-site timing (iz Faza 6.7).
+•	Planirano vs. odrađeno po klijentu/ugovoru/objektu.
+AC
+1.	Izveštaji filtrabilni po periodu i serviseru.
+2.	Brojevi se poklapaju sa RN i kalendarom.
+Testovi
+•	IZ1: Nedelja sa 40h plana i 32h odrađenih → procenat 80%.
+________________________________________
+7.10 Podešavanja (radno vreme, statusi, pravila)
+Pravila konfiguracije (appsettings/tabela)
+•	Radno vreme (global + per serviser).
+•	Statusi termina (šifrarnik) i njihove boje.
+•	Anti-overlap policy (HARD/SOFT).
+•	Minimalni travel buffer (min).
+•	Reminder vremena (T-24/T-2/…).
+•	Map provider (ako koristite mapu).
+•	“Termin bez RN kreira RN automatski” (bool).
+AC
+1.	Izmena podešavanja menja ponašanje bez redeploy-a (reload config).
+2.	Boje statusa reflektovane u UI.
+________________________________________
+Model podataka (minimalni predlog)
+•	KalendarTermin
+ID (PK), RNID NULL, KlijentID, ObjekatID, KomoraID NULL, Title, Start, End, StatusID, LocationText, LeadServiserID NULL, ColorCode NULL, TravelBufferBeforeMin INT NULL, TravelBufferAfterMin INT NULL, CreatedAt, UpdatedAt, RowVersion
+Indeksi: (Start, End), (LeadServiserID, Start), (StatusID, Start)
+•	KalendarTermin_Serviser (N:N)
+TerminID (FK), ServiserID (FK), IsLead BIT DEFAULT 0
+Unique (TerminID, ServiserID), Filtered unique lead (TerminID) WHERE IsLead=1
+•	KalendarStatus (šifrarnik)
+ID, Sifra, Naziv, ColorCode, IsFinal BIT
+•	Serviser_OutOfOffice
+ID, ServiserID, From, To, Tip, Napomena
+•	Serviser_WorkSchedule (opciono)
+ServiserID, DayOfWeek, FromTime, ToTime, IsWorking BIT
+•	Kalendar_Audit (istorija izmena)
+ID, TerminID, ChangedAt, ChangedBy, Field, OldValue, NewValue, Note
+Veze na postojeće: Users (ServiserID), Klijenti/Objekti/Komore, RadniNalog.
+________________________________________
+Dozvole (matrix skraćeno)
+•	Admin: sve (override hard blokova preko specijalne potvrde).
+•	Serviser: read, može “Start/Stop” sopstvenih termina; predlog promene (zahteva odobrenje) — opcionalno.
+•	Planer/Komercijala: kreiranje/izmena termina, dodela servisera, potvrde sa klijentom.
+•	Finansije: read; bez menjanja.
+•	Viewer: read-only.
+________________________________________
+Acceptance criteria (globalno za Fazu 7)
+1.	Kalendar nudi Day/Week/Agenda/Board poglede sa istim skupom termina.
+2.	Kreiranje/izmena termina radi sa dodelom 1..n servisera i statusima.
+3.	Anti-overlap i OOO validacije funkcionišu.
+4.	Pomeranje termina sinhronizuje planirane datume na povezanom RN.
+5.	Reminder-i se isporučuju dodeljenim serviserima u predviđenim vremenima.
+6.	Preventiva iz ugovora generiše termine u budućem periodu.
+7.	Izveštaji o zauzeću i no-show-u se slažu sa podacima.
+________________________________________
+Test plan (ručnim koracima, sa seed podacima)
+•	S1: Kreiraj 3 termina za 2 servisera u jednoj nedelji; proveri poglede i filtere.
+•	S2: Pokušaj preklapanje istog servisera → blokirano (HARD).
+•	S3: Termin u OOO periodu → blokirano.
+•	S4: Pomeri termin → RN planirani datumi ažurirani.
+•	S5: Aktiviraj “Start”/“Stop” → RN status promenjen.
+•	S6: Automatski plan preventive za 6 meseci → očekivan broj termina.
+•	S7: Notifikacije stižu prema pravilima (simuliraj vreme ili ručno okini).
+________________________________________
+Podela po timovima
+•	UI/UX: svi pogledi + interakcije drag&drop, board, map (ako uključite).
+•	Application/Domain: pravila planiranja, detekcija konflikata, reminder servis, SLA hooks.
+•	Infrastructure/DB: tabele iz “Model podataka”, procedure za pretragu termina u opsegu, indeksi.
+•	QA: scenario skripte; seed: 5 servisera, 20 termina, 3 OOO intervala, 2 ugovora sa preventivom.
+Faza 8 — FAKTURISANJE I UPLATE
+Ciljevi
+•	Generisanje faktura iz RN i/ili ugovora (T&M, paušal, fiks).
+•	Praćenje stanja faktura (otvorene, delimično plaćene, plaćene, stornirane).
+•	Uplate, alokacije uplata na fakture, preplate/doplate.
+•	Viševalutnost (opciono), kurs na dan.
+•	Aging, dunning (opomene), kreditne note.
+________________________________________
+8.1 Model podataka (MVP predlog — bez SQL koda)
+Faktura
+ID, Broj, KlijentID, UgovorID NULL, Datum, DatumDosp, Valuta, Kurs DECIMAL(12,6) NULL, Status, Napomena, SubtotalNet DEC(18,2), TaxTotal DEC(18,2), TotalGross DEC(18,2), Placeno DEC(18,2) DEFAULT 0, Dug DEC(18,2) [= TotalGross - Placeno], CreatedAt, UpdatedAt, RowVersion
+Faktura_Stavka
+ID, FakturaID, Tip (Usluga/Oprema/Trosak), RNID NULL, OpremaID NULL, Opis, JM, Kolicina DEC(12,3), CenaNet DEC(18,2), PopustPct DEC(5,2) NULL, PDVStopaPct DEC(5,2),
+Derivacije po stavci (preporuka: PERSISTED computed ili izračunavanje u app-u):
+•	LineNet = ROUND(Kolicina * CenaNet * (1 - ISNULL(PopustPct,0)/100), 2)
+•	LineTax = ROUND(LineNet * PDVStopaPct/100, 2)
+•	LineGross = LineNet + LineTax
+Napomena: da izbegneš grešku koju si imao (computed-na-computed), izračunaj svaku izvedenu vrednost direktno iz baznih kolona (ne koristi computed kolonu unutar druge computed kolone), ili računaj sve u aplikaciji i upiši kao obična polja.
+Uplata
+ID, KlijentID, Datum, Iznos DEC(18,2), Valuta, Kurs DEC(12,6) NULL, Napomena, Izvor (bank, keš…), CreatedAt
+Uplata_Alokacija
+ID, UplataID, FakturaID, Iznos DEC(18,2), CreatedAt
+KreditnaNota (opciono kao posebna tabela; može i Faktura sa tipom Credit)
+ID, Broj, KlijentID, RefFakturaID, Datum, Valuta, Kurs, Status, SubtotalNet, TaxTotal, TotalGross (negativno), CreatedAt
+Šifrarnici / pomoćne
+•	FakturaStatus (Draft, Otvorena, DelimicnoPlacena, Placena, Stornirana)
+•	PorezStopa (Sifra, Naziv, Procenat, VaziOd, VaziDo)
+•	Valuta (Sifra, Naziv) + (opciono) Kurs (Datum, Valuta, Kurs)
+•	BrojaciDokumenata (TipDok, Godina, PoslednjiBroj)
+Pogledi/izveštaji
+•	vFaktura_Stanje (računa Dug, dana kašnjenja, aging bucket)
+•	vKlijent_Finansije (sumari po klijentu)
+Indeksi
+•	Faktura (KlijentID, Status, DatumDosp)
+•	Faktura_Stavka (FakturaID, Tip, OpremaID)
+•	Uplata_Alokacija (FakturaID) i (UplataID)
+________________________________________
+8.2 Numeracija i statusni tok fakture
+Numeracija
+•	Format: YYYY/#### (npr. 2025/0123) po kalendarskoj godini.
+•	Broj se dodeljuje prilikom prelaza Draft → Otvorena (Izdato).
+•	Odvojeni brojači za Fakturu i Kreditnu notu.
+Statusi i prelazi
+•	Draft → Otvorena (broj se dodeli; promena tek posle svih stavki)
+•	Otvorena → DelimicnoPlacena (na alokaciju < Total)
+•	Otvorena/DelimicnoPlacena → Placena (Placeno = Total)
+•	Otvorena → Stornirana (samo ako nema uplata; inače kroz Kreditnu notu)
+AC
+1.	Broj se dodeljuje tačno jednom, na “Izdaj”.
+2.	Storniranje otvorene fakture bez uplata je dozvoljeno; sa uplatama – samo preko kreditne note.
+________________________________________
+8.3 Generisanje fakture
+8.3.1 Iz RN (T&M)
+User story: Iz jednog RN (ili više) generiši fakturu sa stavkama rada, materijala i troškova.
+Pravila
+•	RN mora biti Odobreno (vidi Faza 6.6).
+•	Stavke iz vRN_Stavka → mapiraj na Faktura_Stavka (Tip, Opis, JM, Kolicina, CenaNet, PopustPct, PDVStopaPct).
+•	PDV: po kategoriji (usluga/materijal) i defaultu iz RN_SLA/ugovora.
+•	Moguće grupno fakturisanje više RN istog klijenta/ugovora.
+AC
+1.	Faktura nastaje sa tačnim stavkama i obračunima.
+2.	RN dobijaju referencu na Fakturu; RN status → Fakturisano.
+Testovi
+•	F1: Jedan RN → jedna faktura; iznosi tačni.
+•	F2: Dva RN istog klijenta → jedna grupna faktura (sumarno).
+8.3.2 Paušal/periodika (iz ugovora)
+User story: Mesečno generiši paušalne fakture (npr. Servisni paket).
+Pravila
+•	Ugovor_Billing.Model = Pausal.
+•	Na početku/na kraju perioda (po podešavanju) kreiraj stavku “Paušal – {mesec}” sa definisanom cenom.
+•	Ako ugovor uključuje X sati preventive, ne ubacuj dodatne satnice do X; preko X → dodatni T&M (iz RN).
+AC
+1.	Periodična faktura kreirana u predviđenom ciklusu.
+2.	T&M dodatno fakturisanje ignoriše paket X sati.
+Testovi
+•	P1: Ugovor sa paušalom 300€ mesečno → za tri meseca tri fakture.
+•	P2: RN sati ≤ X → nula uslužnih satnica na paušalu.
+8.3.3 Fiks/milestone
+User story: Ručno pokreni fakturu po definisanom “milestone-u” iz ugovora.
+Pravila
+•	Unapred definisan milestone naziv i iznos; ručno “Generiši”.
+•	Tipično bez RN reference.
+AC
+•	Faktura sadrži tačan milestone opis i iznos.
+________________________________________
+8.4 Obračun, PDV i zaokruživanja
+Pravila
+•	Sve neto vrednosti računati sa 2 decimale; PDV stopa na nivou stavke.
+•	LineNet = ROUND(Qty * CenaNet * (1 - Popust/100), 2)
+•	LineTax = ROUND(LineNet * PDV%/100, 2)
+•	LineGross = LineNet + LineTax
+•	Ukupno po fakturi: SubtotalNet = SUM(LineNet), TaxTotal = SUM(LineTax), TotalGross = SubtotalNet + TaxTotal
+•	Za više poreskih stopa prikaži rekapitulaciju po stopi (0%, 10%, 20%…).
+•	Viševalutno (opciono): čuvati Valuta i Kurs na fakturi; sve obračune radiš u valuti fakture, a izveštaje u bazi konvertuješ po Kurs.
+AC
+•	Suma po fakturi jednaka zbiru stavki; rekapitulacija po stopi tačna.
+________________________________________
+8.5 Izdavanje, štampa, PDF
+User story: Kao finansije, želim pregled i izvoz PDF fakture, sa logom i uslovima plaćanja.
+Pravila
+•	Šablon (layout): header (dobavljač/klijent, PIB/MB, broj/datum, rok), tabela stavki, rekapitulacija PDV, iznos slovima (opciono), napomene.
+•	Status prelazi u Otvorena tek kad korisnik klikne “Izdaj” (dodeli broj).
+•	Verzija PDF-a se može sačuvati (hash ili binarni fajl) radi arhive.
+AC
+•	Broj vidljiv na PDF-u; iznosi i PDV tačni; valuta i kurs prikazani (ako primenljivo).
+________________________________________
+8.6 Uplate i alokacije
+User story: Kao finansije, želim da evidentiram uplatu i alociram je na jednu ili više faktura.
+UI
+•	Ekran “Uplate”: dodaj uplatu (datum, iznos, valuta, kurs, napomena).
+•	Ekran “Alokacije”: odaberi uplatu → lista otvorenih faktura klijenta, upiši iznos(e) alokacije.
+Pravila
+•	Uplata.Iznos u valuti uplate; ako valuta ≠ faktura.valuta → prikaži informativno konverziju po kursu (ne menjaš fakturu).
+•	Alokacijom se ažurira Faktura.Placeno i Faktura.Dug.
+•	Preplata (uplata > suma otvorenih faktura) → “saldo klijenta” (može ostati nealokirano ili generisati kreditnu stavku).
+•	Delimične uplate → status DelimicnoPlacena; pune → Placena.
+AC
+1.	Nije moguće alocirati više nego što je faktura dug.
+2.	Statusi se automatski osvežavaju prema plaćanju.
+Testovi
+•	U1: Uplata 100€ na fakturu 250€ → status Delimično.
+•	U2: Dve fakture, jedna uplata → alokacija na obe.
+•	U3: Preplata → saldo evidentiran.
+________________________________________
+8.7 Aging i opomene (dunning)
+User story: Kao finansije, želim spisak dospelih faktura i automatske opomene.
+Pravila
+•	Aging bucket: 0–30, 31–60, 61–90, 90+.
+•	DaniKasnjenja = (Today - DatumDosp) gde Dug > 0 i Status != Stornirana.
+•	Dunning timeline (konfig):
+o	T+3: Opomena 1 (e-mail)
+o	T+10: Opomena 2
+o	T+20: Opomena 3 + eskalacija (interno)
+•	Log svake opomene u Aktivnost (EntityType='Faktura').
+AC
+•	Izveštaj “Aging” tačno grupiše dugove.
+•	Opomene se loguju; sledeća ne ide dok se ne pošalje prethodna.
+________________________________________
+8.8 Kreditne note / korekcije / storno
+User story: Kao finansije, želim umanjenje fakture delimično ili potpuno i sledljivost na original.
+Pravila
+•	Kreditna nota referencira RefFakturaID.
+•	Stavke su negativne (ili ukupni iznos negativan), sa istim PDV pravilima.
+•	Ako faktura ima nula uplata → dozvoli Stornirana bez kreditne note (brži tok).
+•	Ako ima uplata → kreditna nota do iznosa razlike; po potrebi alocirati i nju.
+AC
+•	Kreditna nota smanjuje dug; u izveštajima se prenosi kao negativan prihod.
+Testovi
+•	K1: Delimična KN na jednu stavku → dug umanjen.
+•	K2: Puna KN (storno) → faktura zatvorena na nulu.
+________________________________________
+8.9 Integracije i korisni prečaci
+•	Iz RN: dugme “Generiši fakturu” na Odobreno RN (Faza 6).
+•	Iz Ugovora (paušal): automatika po periodici.
+•	Brza naplata: iz liste faktura → “Evidentiraj uplatu”.
+•	Naplata po klijentu: ekran “Karton klijenta”: fakture, uplate, saldo, aging.
+________________________________________
+8.10 Dozvole i audit
+Dozvole
+•	Finansije/Admin: kreiranje/izmena/izdavanje/kreditne note/alokacije.
+•	Komercijala: read; može inicirati “predlog fakture” iz RN.
+•	Ostali: read-only.
+Audit
+•	Faktura_Audit: promene statusa, iznosa, roka, valute.
+•	Čuvaj autor i vreme svake radnje (Izdaj, Storno, KN).
+________________________________________
+8.11 Konfiguracija (appsettings / tabele)
+•	Billing.DefaultPDVStopa (npr. 20) + mapiranje po tipu stavke.
+•	Billing.PaymentTermsDays (default rok).
+•	Billing.CurrencyDefault (npr. RSD/EUR).
+•	Billing.RoundMode (Bankers/Standard).
+•	Billing.Numbering (pattern, reset godišnje, prefiks kompanije).
+•	Dunning.Enabled, Dunning.ScheduleDays = [3,10,20].
+•	MultiCurrency.Enabled i izvor kursa (ručni / NBS).
+________________________________________
+8.12 Acceptance criteria — globalno
+1.	Faktura se može generisati iz RN i/ili ugovora, sa tačnim PDV obračunom.
+2.	Izdavanje dodeljuje broj i menja status u Otvorena.
+3.	Uplate i alokacije automatski ažuriraju Placeno i Dug i menjaju status (Delimično/Placena).
+4.	Aging izveštaj tačno prikazuje dospele iznose po bucket-ima.
+5.	Kreditna nota korektno umanjuje dug i prihod i vezana je za original.
+6.	PDF/štampa prikazuje sve obavezne elemente (broj, datumi, valuta, PDV rekapitualcija).
+7.	Dunning opomene se šalju i loguju po rasporedu.
+________________________________________
+8.13 Test plan (ručnim koracima)
+•	T&M: kreiraj RN → odobri → generiši fakturu → proveri iznose i PDV.
+•	Paušal: definiši ugovor → auto-generiši 3 meseca → sve tri fakture postoje.
+•	Uplata: evidentiraj 60% na fakturu → status Delimično; druga uplata 40% → status Placena.
+•	Kreditna nota: delimična → dug smanjen; puna → faktura zatvorena.
+•	Aging: jedna faktura 45 dana kasni → pojavljuje se u 31–60.
+•	Dunning: simuliraj T+3, T+10, T+20 → opomene poslate i upisane u Aktivnost.
+•	Viševalutno: faktura EUR, uplata RSD sa kursom → alokacija i informativna konverzija OK.
+________________________________________
+8.14 Podela po timovima
+•	UI/UX (Fakture & Uplate): liste, detalji, generisanje iz RN/ugovora, PDF preview, alokacije, aging, dunning panel.
+•	App/Services: BillingService (generisanje), InvoicingCalculator (obračuni), PaymentsService (uplate/ alokacije), DunningService.
+•	DB: tabele i indeksi, pogledi vFaktura_Stanje, procedure za grupno fakturisanje.
+•	QA: scenario skripte za sve AC + test podaci (različite PDV, valute, delimična plaćanja).
+
+Faza 9 — RASHODI & PROFIT
+Cilj
+•	Standardizovan model troška (rad, materijal, putni, podizvođači, opšti/overhead).
+•	Snapshot troška u trenutku nastanka (kao što već radimo sa cenama/SLA u RN).
+•	Profitabilnost po RN / Komori / Objektu / Klijentu / Ugovoru / Periodu.
+•	Usklađenje sa magacinom/računovodstvom (po potrebi).
+________________________________________
+9.1 Model troška (koncept)
+Vrste troškova
+1.	Direktan rad: sati × interna kost cena (po ulozi, sa multiplikatorima: noć/vikend).
+2.	Direktan materijal/oprema: nabavna cena (MA/FIFO) × količina.
+3.	Direktni troškovi puta: km, putarina, parking, smeštaj, dnevnice (stvarna cena).
+4.	Podizvođači/servis partneri (ako koristiš) — faktura dobavljača kao cost.
+5.	Garancija/RMA (nefakturabilno) — ide u trošak, prihod = 0 (posebno obeležiti).
+6.	Overhead (opšti): raspodela (po satu / procentu prihoda / po RN) — konfigurisano.
+Profit formule (po RN):
+•	PrihodNet = suma neto iznosa stavki namenjenih fakturisanju (iz vRN_Stavka ili iz fakture kad se izda).
+•	DirektanTrošak = Rad + Materijal + Put + Podizvođači.
+•	BrutoDobit = PrihodNet − DirektanTrošak.
+•	OverheadAlokacija = pravilo (vidi 9.2).
+•	NetoDobit = BrutoDobit − OverheadAlokacija.
+•	Margin% = (NetoDobit / PrihodNet) × 100 (ako PrihodNet > 0).
+Napomena: za RN koji nisu fakturisani (još), koristi plan-prihod (iz RN stavki) ili filtriraj u izveštajima.
+________________________________________
+9.2 Rad (satnice) — interni trošak & overhead
+Podaci (bez koda, šta treba obezbediti)
+•	Šifrarnik RoleCost: Rola (Serviser/Inženjer/…), CostSat (osnovna interna), MultVikend, MultNoc, VaziOd/Do.
+•	RN_Rad dopuna: CostSatSnapshot, CostIznos (Sati × CostSatSnapshot × multiplikator) — snimiti pri unosu ili pri “Predato”.
+Overhead (izaberi model, konfig):
+•	Po satu: npr. +X RSD/eur po svakom radnom satu.
+•	% od prihoda: npr. 10% PrihodNet.
+•	Fiks po RN: npr. 5€ po RN.
+•	(Napredno) vozila/alati kao resursi sa svojom satnicom — kasnije.
+AC
+1.	RN_Rad čuva CostSatSnapshot i CostIznos.
+2.	Overhead se računa prema aktivnom modelu bez intervencije korisnika.
+Testovi
+•	R1: Serviser 5h standard + 2h vikend, cost 10€/h, vikend ×1.5 → CostIznos = 5×10 + 2×15.
+•	R2: Overhead „po satu” 2€/h → 7h = 14€.
+________________________________________
+9.3 Materijal/oprema — nabavna cena & magacin
+Varijante izvora nabavne cene:
+•	Moving Average (MA) po artiklu i valuti.
+•	FIFO (ako vodite zalihe).
+•	Direktni unos ako nema magacina (fallback).
+Podaci
+•	Oprema + istorija nabavnih cena (Oprema_NabavnaCena_Hist: OpremaID, Datum, Cena, Valuta, Izvor), ili pravi magacin:
+o	MagacinDokument (Primka/Izdatnica/Povrat) i MagacinStavka sa količinom, nabavnom cenom, lot/serija.
+RN_Materijal dopune:
+•	CostCenaSnapshot, CostIznos (= Količina × CostCenaSnapshot).
+•	Popunjava se:
+o	Pri izdavanju iz magacina za RN, ili
+o	Pri unosu materijala u RN (ako nema magacina → MA iz hist ili ručno).
+AC
+1.	Svaka materijalna stavka RN ima CostCenaSnapshot i CostIznos.
+2.	Ako nema dostupne cene, UI traži unos i označava stavku kao „ručno procenjeno”.
+Testovi
+•	M1: FIFO sa dva ulaza: 5 kom @ 10€, 10 kom @ 12€; potrošnja 6 → cost = 5×10 + 1×12.
+•	M2: Bez magacina, MA=11.5€ → 3 kom → 34.5€.
+________________________________________
+9.4 Putni troškovi i dnevnice
+Izvor: RN_Trosak (već postoji).
+•	CostIznos = Iznos (već izračunat × količina).
+•	(Opc.) putni trošak vozila (km × interni cost/km) u Overhead ili direktno kao cost — konfig.
+AC
+•	Svi tipovi u RN_Trosak ulaze u DirektanTrošak (osim ako policy isključi nešto).
+Testovi
+•	T1: 120 km × 0.2€ = 24€ cost; plus putarina 4.5€.
+________________________________________
+9.5 Podizvođači (ako primenljivo)
+Tabela: RN_Podizvodjac (RNID, DobavljacID, BrojFakture, Datum, IznosNet, Valuta, Kurs, Napomena).
+•	Ulazi u DirektanTrošak (konvertovano u valutu izveštaja ako treba).
+AC
+•	RN sa podizvođačem povećava cost i smanjuje neto dobit.
+________________________________________
+9.6 Snapshot & zaključenje troška
+Kada „zaključavamo” cost?
+•	Po default-u kada RN pređe u Predato (stavke zaključane).
+•	Izmena nakon Predato moguća samo za Admin (audit).
+•	Ako kasnije stigne ispravka nabavne (npr. iz magacina) → nova revizija cost-a (audit + recalculation flag).
+AC
+•	RN ima polje CostLockedAt i CostVersion.
+•	Svaka izmena posle zaključavanja se audituje.
+________________________________________
+9.7 Multi-valutnost & kurs
+Pravila
+•	Trošak i prihod čuvaju se u njihovim izvornim valutama, ali izveštaji se konsoliduju u baznoj valuti (npr. RSD ili EUR) po:
+o	Kursu na dan RN statusa „Predato” (ili DatumFakture za prihod), konfig.
+•	Kurs tabela (ručno ili integracija NBS).
+AC
+•	Izveštaji dosledni po izboru „kursnog dana”.
+Testovi
+•	V1: RN trošak u EUR, prihod u RSD → konsolidacija u EUR po definisanom kursu.
+________________________________________
+9.8 Pogledi & KPI (dashboards)
+Pogledi (DB)
+•	vRN_Profit: RNID, PrihodNet, CostRad, CostMaterijal, CostPut, CostSub, Overhead, NetoDobit, Margin%.
+•	vUgovor_Profit: agregat po Ugovoru (period filter).
+•	vKlijent_Profit: agregat po Klijentu.
+•	vKomora_LifecycleCost: suma cost-a i prihoda po Komori (TCO).
+•	vObjekat_Profit: agregat po objektu.
+Dashboardi (UI)
+•	Po ugovoru: prihod vs. cost vs. target margin.
+•	Po serviseru: bruto dobit po osobi (ne za HR ocenu, samo za operativu).
+•	Po klijentu: top profitabilni / gubitaši.
+•	Po komori: TCO i učestalost intervencija.
+KPI
+•	Bruto/Neto marža %, Prihod/RN, Cost/RN, Cost/h, Utilizacija (iz kalendara: planirano vs. odrađeno).
+•	Garancijski udeo (RN sa JeGarancija=1) u trošku.
+AC
+•	Dashboardi reaktivni na period/klijent/ugovor filtere.
+•	Brojevi se poklapaju sa sumama iz RN i faktura.
+________________________________________
+9.9 Usklađenje sa računovodstvom (opciono)
+Integracioni kanali:
+•	Export sumarnih dnevnika (CSV/Excel/API): Prihodi (po kontima), COGS (materijal), Trošak rada, Putni, Overhead.
+•	Import nabavnih cena i lagera (ako primarni sistem nije vaš magacin).
+•	Mapping: OpremaID ↔ Šifra artikla u ERP.
+AC
+•	Periodični export se slaže sa GL po ukupama (uz toleranciju za kurs/zaokruživanja).
+________________________________________
+9.10 Dozvole & audit
+Dozvole
+•	Finansije/Admin: menjaju cost politike, zaključavaju RN cost, manualne korekcije.
+•	Operativa: unosi sate/materijal/putne (pre zaključavanja).
+•	Viewer/Komercijala: read-only dashboardi (po potrebi ograničiti prikaz cost-a).
+Audit
+•	Cost_Audit: RNID, Field, OldValue, NewValue, Who, When, Note.
+•	Log svake promene RoleCost, Oprema_NabavnaCena_Hist.
+________________________________________
+9.11 Konfiguracija (appsettings / tabele)
+•	Cost.Labor.Model = RoleBased
+•	Cost.Labor.Multipliers = {Noc:1.3, Vikend:1.5}
+•	Cost.Material.Method = MA|FIFO|Manual
+•	Cost.Overhead.Mode = PerHour|PercentRevenue|PerRN
+•	Cost.Overhead.Rate = 2 EUR/h | 10% | 5 EUR/RN
+•	Cost.Lock.OnStatus = Predato
+•	Currency.Base = EUR
+•	Currency.RateSource = Manual|NBS
+•	Reporting.RevenueSource = Fakture|RN_Stavke (šta uzima za PrihodNet u profit izveštaju)
+________________________________________
+9.12 Acceptance criteria — globalno
+1.	Svaki RN poseduje snapshot troška rada i materijala + putne troškove/ sub.
+2.	Overhead se računa prema jednom od odabranih modela i prikazuje u profitu RN.
+3.	Pogledi vRN_Profit / vUgovor_Profit / vKlijent_Profit vraćaju tačne zbirne vrednosti po periodu.
+4.	Garancijski RN ulaze u trošak, a ne ulaze u prihod (u KPI zasebno).
+5.	Multi-valutna konsolidacija funkcioniše po izabranom kursnom danu.
+6.	Izveštaji su konzistentni sa fakturisanim iznosima i magacinskim kostovima.
+7.	Zaključavanje troška onemogućava tihe izmene (osim Admin sa auditom).
+________________________________________
+9.13 Test plan (ručnim koracima)
+•	P1 (Labor): Unesi sate sa različitim režimima (standard/vikend) → CostIznos korektan.
+•	P2 (Material MA/FIFO): potrošnja iz magacina → CostIznos prati MA/FIFO pravila.
+•	P3 (Overhead): promeni model i proveri RN profit → brojke se menjaju očekivano.
+•	P4 (Warranty): RN=Garancija → profit negativan (samo cost).
+•	P5 (Invoice vs RN): faktura nastala → dashboard koristi fakture za prihod.
+•	P6 (Multi-currency): trošak EUR, prihod RSD → konsolidacija tačna po kursu.
+•	P7 (Lock & Audit): RN Predato → izmena materijala nije dozvoljena; Admin override zabeležen.
+________________________________________
+Podela po timovima
+•	DB: tabele RoleCost, Oprema_NabavnaCena_Hist (ili Magacin), dopune RN_Rad/RN_Materijal, pogledi vRN_Profit… indeksi.
+•	Application/Domain: CostEngine (labor/material/overhead kalkulator), ProfitService (agregati), CostLocking.
+•	UI/UX: Profit dashboardi (RN/Ugovor/Klijent), filteri perioda/valute, drill-down do stavke.
+•	QA: scenariji iz 9.13; test podaci (razne valute, različite role cost, MA/FIFO).
+
+Kritičan put (redosled zavisnosti)
+1.	Auth & RBAC → 2) Klijenti → 3) Objekti/Komore → 4) Ugovori (SLA + cenovnik + opseg) →
+2.	Radni nalozi (RN) → 6) Kalendar → 7) Fakturisanje & Uplate → 8) Rashodi & Profit → 9) Izveštaji
+Paralelizacija (ti & ja = 2 trake rada)
+•	Traka A (domen & DB): migracije, stored view-ovi, validacije, seed podaci.
+•	Traka B (UI & aplikacija): ekrani, navigacija, validacije, statusni tokovi.
+•	“Preklapanja” koja možemo raditi u isto vreme:
+o	(A) Klijenti+Objekti+Komore DB & servisi ⟷ (B) njihove liste/detalji
+o	(A) Ugovor_SLA/Cenovnik ⟷ (B) wizard ugovora
+o	(A) RN_Rad/Materijal/Trošak & vRN_Stavka ⟷ (B) RN ekrani
+o	(A) Faktura/Faktura_Stavka/Uplata ⟷ (B) fakture & alokacije
+o	(A) vRN_Profit ⟷ (B) profit dashboard
+Milestone-i i “Definition of Done” (bez datuma)
+M1 – Osnova aplikacije
+•	Shell (meni po ulozi), login, session, audit log.
+•	DoD: prijava radi, role sakrivaju stavke menija, status bar pokazuje bazu/korisnika.
+M2 – CRM
+•	Klijenti (lista + detalj + kontakti), Objekti (geo validacija), Komore (veza na objekat).
+•	DoD: pretraga, paging, zabrana duplikata (PIB), validacije lat/lon, link/unlink objekta.
+M3 – Ugovori
+•	Wizard (opseg, trajanje, SLA, cenovnik, billing), aktivacija, aneksi + verzionisanje.
+•	DoD: Active ugovor vidljiv u RN; snapshot SLA/cena pri kreiranju RN.
+M4 – RN
+•	Kreiranje (ad-hoc/iz ugovora/iz termina), rad/materijal/troškovi, workflow do “Odobreno”.
+•	DoD: vRN_Stavka vraća tačne iznose; guard nesačuvanih izmena; SLA KPI (✓/✗).
+M5 – Kalendar
+•	Pogledi Day/Week/Agenda/Board, dodela servisera, anti-overlap, OOO.
+•	DoD: drag&drop menja plan RN; reminder-i za servisere.
+M6 – Fakturisanje & Uplate
+•	Generisanje iz RN i paušala, numeracija, PDF, alokacije uplata, aging.
+•	DoD: statusi (Draft/Otvorena/Delimično/Plaćena), dunning log, rekap PDV po stopama.
+M7 – Profit
+•	Snapshot cost rada i materijala, overhead pravilo, vRN_Profit, agregati po ugovoru/klijentu.
+•	DoD: dashboard pokazuje Neto dobit i Margin% po filterima; zaključavanje cost-a pri “Predato”.
+M8 – Hardening
+•	Error & retry politika, konkurentnost (RowVersion), sigurnosne dozvole, backup/restore skripte.
+•	DoD: prolaz automatizovanih smoke testova i ručnog E2E scenarija.
+Plan upravljanja radom (bez datuma)
+•	Alat: Linear ili ClickUp (board “Milestones”, “Features”, “Bugs”).
+•	Jedinična mera: “story points” (S/M/L/XL) — bez prevođenja u dane.
+•	Ritam: kratke iteracije sa demoom na kraju (bez trajanja izraženog u vremenu).
+•	Kvalitet: Definition of Ready/Done po gore navedenim DoD-ovima; code review obavezan; feature flagovi.
+•	Rizici & mitigacija:
+o	Promena šema → migracije unapred + skripta za rollback.
+o	Cene/PDV pravila → test primeri sa edge slučajevima (više stopa, popust, zaokruživanje).
+o	SLA i kalendar → testovi za radne dane vs vikende, OOO blokade, konflikt termina.
+Kako da sam proceniš trajanje bez “nagađanja”
+Ako želiš okvirno planiranje, koristi kapacitetni pristup bez datuma:
+1.	Razbij svaku funkciju na 5–10 “deliverable” taskova sa jasnim DoD.
+2.	Dodeli S/M/L/XL (relativna složenost).
+3.	Prati propusnost (koliko S/M/L završimo po iteraciji).
+4.	Nakon 1–2 iteracije, ekstrapoliraj preostale S/M/L do kraja — to daje prognozu bez eksplicitnih vremenskih obećanja.
