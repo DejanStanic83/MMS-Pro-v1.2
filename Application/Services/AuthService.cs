@@ -22,7 +22,7 @@ namespace MMS.Application.Services
             var user = await _dbContext.Set<User>()
                 .FirstOrDefaultAsync(u => u.UserName == username && u.IsActive);
 
-            if (user != null && /* provera lozinke */)
+            if (user != null && user.PasswordHash == password) // samo za plain text, nije preporuèljivo za produkciju!
             {
                 return _mapper.Map<UserDto>(user);
             }

@@ -15,6 +15,7 @@ using Serilog.Extensions.Logging;
 using Domain.Common;
 using MMS.Application.DTOs;
 
+
 namespace Presentation
 {
     //test za commit
@@ -67,7 +68,7 @@ namespace Presentation
                 loggingBuilder.AddSerilog(Log.Logger, dispose: true);
             });
 
-            services.AddAutoMapper(typeof(UserProfile));
+            services.AddAutoMapper(typeof(UserProfile).Assembly);
 
             ServiceProvider = services.BuildServiceProvider();
 
