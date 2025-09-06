@@ -4,8 +4,16 @@ using Xunit;
 
 namespace Infrastructure.Test
 {
+    /// <summary>
+    /// Test klasa za proveru direktne konekcije na SQL Server bazu podataka.
+    /// Ovaj test proverava da li se može uspostaviti veza koristeæi zadati connection string.
+    /// </summary>
     public class DatabaseConnectionTests
     {
+        /// <summary>
+        /// Testira da li se SQL konekcija može uspešno otvoriti.
+        /// Ako konekcija ne može da se otvori, test æe pasti i ispisati poruku greške.
+        /// </summary>
         [Fact]
         public void TestSqlConnection()
         {

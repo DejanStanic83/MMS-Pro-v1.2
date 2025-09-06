@@ -4,8 +4,16 @@ using System;
 
 namespace Domain.Test
 {
+    /// <summary>
+    /// Test klasa za entitet Komora.
+    /// Proverava kreiranje i osnovna svojstva komore.
+    /// </summary>
     public class KomoraTests
     {
+        /// <summary>
+        /// Testira da li se Komora može uspešno kreirati sa validnim podacima
+        /// i da li su osnovna svojstva ispravno postavljena.
+        /// </summary>
         [Fact]
         public void Komora_CanBeCreated_WithValidData()
         {

@@ -7,8 +7,16 @@ using Moq;
 
 namespace Infrastructure.Test
 {
+    /// <summary>
+    /// Test klasa za napredne funkcionalnosti AppDbContext-a.
+    /// Proverava health check i osnovne CRUD operacije nad entitetom Klijent.
+    /// </summary>
     public class AppDbContextAdvancedTests
     {
+        /// <summary>
+        /// Testira da HealthCheckAsync vraæa true i loguje "OK" kada je baza dostupna.
+        /// Koristi se in-memory baza i Moq za proveru logovanja.
+        /// </summary>
         [Fact]
         public async Task HealthCheckAsync_ReturnsTrue_And_Logs_OK_WhenDatabaseIsAvailable()
         {
@@ -35,6 +43,10 @@ namespace Infrastructure.Test
                 Moq.Times.Once);
         }
 
+        /// <summary>
+        /// Testira da li se entitet Klijent može uspešno upisati i proèitati iz baze.
+        /// Koristi se in-memory baza za izolovano testiranje.
+        /// </summary>
         [Fact]
         public async Task Can_Insert_And_Read_Klijent()
         {

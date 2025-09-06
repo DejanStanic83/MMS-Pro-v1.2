@@ -3,8 +3,16 @@ using MMS.Domain.Entities;
 
 namespace Domain.Test
 {
+    /// <summary>
+    /// Test klasa za entitet User.
+    /// Proverava kreiranje korisnika i osnovne podatke, kao i generisanje punog imena.
+    /// </summary>
     public class UserTests
     {
+        /// <summary>
+        /// Testira da li se User može uspešno kreirati sa validnim podacima
+        /// i da li su osnovna svojstva ispravno postavljena.
+        /// </summary>
         [Fact]
         public void User_CanBeCreated_WithValidData()
         {
@@ -30,6 +38,9 @@ namespace Domain.Test
             Assert.Equal(role, user.Role);
         }
 
+        /// <summary>
+        /// Testira da li se puno ime korisnika pravilno generiše spajanjem imena i prezimena.
+        /// </summary>
         [Fact]
         public void User_FullName_IsCorrect()
         {

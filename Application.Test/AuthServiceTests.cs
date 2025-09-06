@@ -15,14 +15,26 @@ using MMS.Infrastructure.Data; // Dodaj ovu liniju umesto: using MMS.Infrastruct
 
 namespace Application.Test
 {
+    /// <summary>
+    /// Test klasa za AuthService i mapiranje User -> UserDto.
+    /// Sadrži testove za autentifikaciju i mapiranje korisnika.
+    /// </summary>
     public class AuthServiceTests
     {
+        /// <summary>
+        /// Pomoæna metoda za dobijanje IMapper instance sa UserProfile mapiranjem.
+        /// </summary>
         private static IMapper GetMapper()
         {
             var config = new MapperConfiguration(cfg => cfg.AddProfile<UserProfile>());
             return config.CreateMapper();
         }
 
+        /// <summary>
+        /// Pomoæna metoda za kreiranje DbContext-a sa zadatim korisnicima u memorijskoj bazi.
+        /// </summary>
+        /// <param name="users">Lista korisnika koji se dodaju u bazu.</param>
+        /// <returns>DbContext sa korisnicima.</returns>
         private static DbContext GetDbContextWithUsers(List<User> users)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>() // Ispravi ovde tip!
@@ -34,6 +46,9 @@ namespace Application.Test
             return dbContext;
         }
 
+        /// <summary>
+        /// Testira da li AuthenticateAsync vraæa UserDto kada su kredencijali ispravni.
+        /// </summary>
         [Fact]
         public async Task AuthenticateAsync_ReturnsUserDto_WhenCredentialsAreValid()
         {
@@ -62,6 +77,9 @@ namespace Application.Test
             Assert.Equal("Admin", result.Role);
         }
 
+        /// <summary>
+        /// Testira da li AuthenticateAsync vraæa null kada je lozinka pogrešna.
+        /// </summary>
         [Fact]
         public async Task AuthenticateAsync_ReturnsNull_WhenPasswordIsInvalid()
         {
@@ -81,6 +99,9 @@ namespace Application.Test
             Assert.Null(result);
         }
 
+        /// <summary>
+        /// Testira da li AuthenticateAsync vraæa null kada je korisnik neaktivan.
+        /// </summary>
         [Fact]
         public async Task AuthenticateAsync_ReturnsNull_WhenUserIsInactive()
         {
@@ -100,6 +121,9 @@ namespace Application.Test
             Assert.Null(result);
         }
 
+        /// <summary>
+        /// Testira da li AuthenticateAsync vraæa null kada korisnik ne postoji.
+        /// </summary>
         [Fact]
         public async Task AuthenticateAsync_ReturnsNull_WhenUserDoesNotExist()
         {
@@ -112,6 +136,9 @@ namespace Application.Test
             Assert.Null(result);
         }
 
+        /// <summary>
+        /// Testira da li UserProfile pravilno mapira DisplayName i Role iz User u UserDto.
+        /// </summary>
         [Fact]
         public void UserProfile_Maps_DisplayName_And_Role_Correctly()
         {

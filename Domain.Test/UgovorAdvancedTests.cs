@@ -4,8 +4,15 @@ using System;
 
 namespace Domain.Test
 {
+    /// <summary>
+    /// Napredni testovi za poslovna pravila vezana za entitet Ugovor.
+    /// Ovi testovi simuliraju validacije i ogranièenja koja bi trebalo implementirati u servisnom sloju.
+    /// </summary>
     public class UgovorAdvancedTests
     {
+        /// <summary>
+        /// Testira da ugovor ne može biti aktiviran ako nema definisan opseg (npr. objekat ili komoru).
+        /// </summary>
         [Fact]
         public void Cannot_Activate_Contract_Without_Valid_Scope()
         {
@@ -29,6 +36,9 @@ namespace Domain.Test
             Assert.False(hasScope); // Ugovor ne može biti aktiviran bez opsega
         }
 
+        /// <summary>
+        /// Testira da ugovor ne može biti aktiviran ako je datum završetka pre datuma poèetka.
+        /// </summary>
         [Fact]
         public void Cannot_Activate_Contract_If_EndDate_Before_StartDate()
         {
@@ -42,6 +52,9 @@ namespace Domain.Test
             // U servisu bi ovde bacio izuzetak ili vratio grešku
         }
 
+        /// <summary>
+        /// Testira da broj ugovora mora biti jedinstven za svakog klijenta.
+        /// </summary>
         [Fact]
         public void Contract_Number_Must_Be_Unique_Per_Client()
         {
@@ -56,6 +69,9 @@ namespace Domain.Test
             Assert.False(isUnique);
         }
 
+        /// <summary>
+        /// Testira da model naplate "Paušal" zahteva definisanu meseènu naknadu.
+        /// </summary>
         [Fact]
         public void Pausal_Model_Requires_MonthlyFee()
         {
@@ -73,6 +89,9 @@ namespace Domain.Test
             Assert.True(modelNaplata == "Pausal" && !mesecniPausal.HasValue);
         }
 
+        /// <summary>
+        /// Testira da nije moguæe ukloniti opseg (npr. komoru) iz ugovora ako postoje otvoreni radni nalozi.
+        /// </summary>
         [Fact]
         public void Cannot_Remove_Scope_If_Open_WorkOrders_Exist()
         {
@@ -84,6 +103,9 @@ namespace Domain.Test
             // U servisu bi ovde bacio izuzetak ili vratio grešku
         }
 
+        /// <summary>
+        /// Testira da SLA vrednosti (response time i on-site time) moraju biti u razumnom opsegu (> 0).
+        /// </summary>
         [Fact]
         public void SLA_Values_Must_Be_Within_Reasonable_Range()
         {

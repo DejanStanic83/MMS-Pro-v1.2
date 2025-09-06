@@ -4,8 +4,16 @@ using System;
 
 namespace Domain.Test
 {
+    /// <summary>
+    /// Test klasa za entitet Klijent.
+    /// Proverava kreiranje i osnovna svojstva klijenta.
+    /// </summary>
     public class KlijentTests
     {
+        /// <summary>
+        /// Testira da li se Klijent može uspešno kreirati sa validnim podacima
+        /// i da li su osnovna svojstva ispravno postavljena.
+        /// </summary>
         [Fact]
         public void Klijent_CanBeCreated_WithValidData()
         {

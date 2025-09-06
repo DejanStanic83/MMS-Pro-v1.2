@@ -7,11 +7,18 @@ using System.Collections.Generic;
 
 namespace MMS.Infrastructure.Data
 {
+    /// <summary>
+    /// Glavni DbContext za pristup bazi podataka aplikacije.
+    /// Sadrži DbSet-ove za sve entitete i konfiguraciju modela.
+    /// </summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>
+        /// Konstruktor koji prima opcije za DbContext.
+        /// </summary>
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        // Master tabele
+        // Master tabele (osnovne tabele sistema)
         public DbSet<Klijent> Klijenti { get; set; }
         public DbSet<Objekat> Objekti { get; set; }
         public DbSet<Komora> Komore { get; set; }
@@ -44,6 +51,10 @@ namespace MMS.Infrastructure.Data
         public DbSet<RN_StatusHistory> RN_StatusHistory { get; set; }
         public DbSet<RN_Trosak> RN_Troskovi { get; set; }
 
+        /// <summary>
+        /// Konfiguriše model baze podataka (kljuène veze, composite keys, itd).
+        /// </summary>
+        /// <param name="modelBuilder">ModelBuilder za Fluent API konfiguraciju.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // KlijentObjekat - composite key
@@ -74,11 +85,17 @@ namespace MMS.Infrastructure.Data
                 .WithMany(o => o.KomoraOpreme)
                 .HasForeignKey(ko => ko.OpremaId);
 
+            // Valuta - entitet bez primarnog kljuèa
             modelBuilder.Entity<Valuta>().HasNoKey();
 
             // Ostale konfiguracije po potrebi...
         }
 
+        /// <summary>
+        /// Proverava dostupnost baze podataka i loguje rezultat.
+        /// </summary>
+        /// <param name="logger">Logger za beleženje rezultata health check-a (opciono).</param>
+        /// <returns>True ako je konekcija uspešna, u suprotnom false.</returns>
         public async Task<bool> HealthCheckAsync(ILogger? logger = null)
         {
             try

@@ -1,16 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
 	  <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Automatski dodaje using direktive za najčešće korišćene namespace-ove -->
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Uključuje proveru za nullable reference tipove -->
     <Nullable>enable</Nullable>
 
+    <!-- Ovaj projekat se ne može pakovati kao NuGet paket -->
     <IsPackable>false</IsPackable>
+    <!-- Obeležava projekat kao test projekat (omogućava test alate i integracije) -->
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- NuGet paketi potrebni za testiranje, pokrivenost koda i rad sa bazom u memoriji -->
     <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <!-- Ovi paketi se koriste samo u ovom projektu i neće biti dostupni projektima koji zavise od ovog -->
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -27,15 +34,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Reference na Infrastructure i Domain projekte, omogućava testiranje njihovog koda -->
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Omogućava korišćenje Xunit using direktive u testovima -->
     <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Omogućava korišćenje using direktiva za Infrastructure.Data i Domain.Entities u testovima -->
     <Using Include="MMS.Infrastructure.Data" />
     <Using Include="MMS.Domain.Entities" />
   </ItemGroup>

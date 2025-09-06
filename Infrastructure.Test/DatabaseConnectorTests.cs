@@ -7,8 +7,16 @@ using System.Data.SqlClient;
 
 namespace MMS.Infrastructure.Tests
 {
+    /// <summary>
+    /// Test klasa za DatabaseConnector servis.
+    /// Proverava da li HealthCheckAsync metoda ispravno detektuje dostupnost baze.
+    /// </summary>
     public class DatabaseConnectorTests
     {
+        /// <summary>
+        /// Testira da HealthCheckAsync vraæa true kada je baza dostupna.
+        /// Koristi se in-memory baza i Serilog logger za test okruženje.
+        /// </summary>
         [Fact]
         public async Task HealthCheckAsync_ReturnsTrue_WhenDbIsAvailable()
         {

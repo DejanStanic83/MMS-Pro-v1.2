@@ -1,12 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Tip izlaza: biblioteka (DLL, a ne izvršni fajl) -->
     <OutputType>Library</OutputType>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
     <TargetFramework>net8.0-windows</TargetFramework>
-	<Nullable>enable</Nullable>
+    <!-- Uključuje proveru za nullable reference tipove -->
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Definisani folderi za organizaciju infrastrukturnog sloja (Helpers, Resources, ViewModels, Views) -->
     <Folder Include="Helpers\" />
     <Folder Include="Resources\" />
     <Folder Include="ViewModels\" />
@@ -14,13 +18,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.19" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.19" />
-    <PackageReference Include="Serilog" Version="4.3.0" />
+    <!-- NuGet paketi potrebni za rad sa bazom, ORM i logovanje -->
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" /> <!-- SQL Server klijent za pristup bazi -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.19" /> <!-- Entity Framework Core ORM -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.19" /> <!-- InMemory provider za testiranje -->
+    <PackageReference Include="Serilog" Version="4.3.0" /> <!-- Serilog za logovanje -->
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referenca na Domain projekat, omogućava korišćenje domen modela u infrastrukturnom sloju -->
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 

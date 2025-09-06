@@ -1,21 +1,49 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
 namespace MMS.Presentation.ViewModels
 {
-    public class ShellViewModel
+    /// <summary>
+    /// ViewModel za glavnu (shell) stranicu aplikacije.
+    /// Sadrži meni stavke i logiku za promenu stranica.
+    /// </summary>
+    public class ShellViewModel : INotifyPropertyChanged
     {
-        // Primer property-ja za stavke menija
+        // Privatno polje za trenutno izabranu stranicu
+        private string? _selectedPage;
+
+        /// <summary>
+        /// Kolekcija stavki menija koje se prikazuju u glavnom meniju aplikacije.
+        /// </summary>
         public ObservableCollection<string> MenuItems { get; }
 
-        // Primer property-ja za trenutno selektovanu stranicu
-        public string? SelectedPage { get; set; }
+        /// <summary>
+        /// Trenutno izabrana stranica. Promena vrednosti obaveštava UI.
+        /// </summary>
+        public string? SelectedPage
+        {
+            get => _selectedPage;
+            set
+            {
+                if (_selectedPage != value)
+                {
+                    _selectedPage = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
-        // Primer komande za navigaciju
+        /// <summary>
+        /// Komanda za navigaciju između stranica (nije implementirana, može se dodati kasnije).
+        /// </summary>
         public ICommand? NavigateCommand { get; }
 
-        // Konstruktor: inicijalizacija property-ja
+        /// <summary>
+        /// Konstruktor. Inicijalizuje kolekciju stavki menija i komandu za navigaciju.
+        /// </summary>
         public ShellViewModel()
         {
             MenuItems = new ObservableCollection<string>
@@ -30,12 +58,26 @@ namespace MMS.Presentation.ViewModels
                 "Fakturisanje",
                 "Uplate",
                 "Rashodi",
-                "Izve�taji",
-                "Administracija"
+                "Izveštaji",
+                "Administracija",
+                "Usluge"
             };
 
-            // Inicijalizacija komande (placeholder, implementiraj po potrebi)
-            NavigateCommand = null;
+            NavigateCommand = null; // ovde možeš kasnije ubaciti RelayCommand ili sličnu implementaciju
+        }
+
+        /// <summary>
+        /// Događaj koji se podiže kada se promeni vrednost nekog svojstva (INotifyPropertyChanged).
+        /// </summary>
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        /// <summary>
+        /// Pomoćna metoda za podizanje PropertyChanged događaja.
+        /// </summary>
+        /// <param name="propertyName">Ime svojstva koje se promenilo.</param>
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

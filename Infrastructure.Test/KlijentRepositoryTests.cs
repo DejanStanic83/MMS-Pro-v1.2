@@ -8,8 +8,15 @@ using System.Data.SqlClient;
 
 namespace MMS.Infrastructure.Tests
 {
+    /// <summary>
+    /// Test klasa za KlijentRepository.
+    /// Proverava osnovne CRUD operacije nad entitetom Klijent koristeæi in-memory bazu.
+    /// </summary>
     public class KlijentRepositoryTests
     {
+        /// <summary>
+        /// Pomoæna metoda za kreiranje AppDbContext-a sa in-memory bazom.
+        /// </summary>
         private AppDbContext GetDbContext()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -18,6 +25,9 @@ namespace MMS.Infrastructure.Tests
             return new AppDbContext(options);
         }
 
+        /// <summary>
+        /// Testira dodavanje i èitanje klijenta iz repozitorijuma.
+        /// </summary>
         [Fact]
         public async Task AddAndGetKlijent_WorksCorrectly()
         {
@@ -35,6 +45,9 @@ namespace MMS.Infrastructure.Tests
             Assert.Equal("Test Klijent", fetched!.NazivKlijenta);
         }
 
+        /// <summary>
+        /// Testira ažuriranje i brisanje klijenta iz repozitorijuma.
+        /// </summary>
         [Fact]
         public async Task UpdateAndDeleteKlijent_WorksCorrectly()
         {

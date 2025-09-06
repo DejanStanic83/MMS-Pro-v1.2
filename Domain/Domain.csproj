@@ -1,12 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Tip izlaza: biblioteka (DLL, a ne izvršni fajl) -->
     <OutputType>Library</OutputType>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
     <TargetFramework>net8.0-windows</TargetFramework>
-	<Nullable>enable</Nullable>
+    <!-- Uključuje proveru za nullable reference tipove -->
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Definisani folderi za organizaciju domen sloja (Helpers, Resources, ViewModels, Views) -->
     <Folder Include="Helpers\" />
     <Folder Include="Resources\" />
     <Folder Include="ViewModels\" />

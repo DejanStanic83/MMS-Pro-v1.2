@@ -1,12 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Glavni deo projekta: koristi .NET SDK za build i razvoj -->
 
   <PropertyGroup>
+    <!-- Tip izlaza: biblioteka (DLL, ne izvršni fajl) -->
     <OutputType>Library</OutputType>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
     <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Uključuje proveru za nullable reference tipove -->
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Definišu se folderi koji su deo projekta (organizacija koda) -->
     <Folder Include="Helpers\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Resources\" />
@@ -15,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Spisak eksternih NuGet paketa koje projekat koristi -->
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
@@ -25,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Reference na druge projekte u rešenju (Domain i Infrastructure) -->
     <ProjectReference Include="..\Domain\Domain.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>

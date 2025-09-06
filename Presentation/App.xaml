@@ -3,6 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Presentation"
              StartupUri="MainWindow.xaml">
+    <!--
+        Application.Resources sekcija služi za definisanje globalnih resursa (stilova, tema, kontrola, itd.)
+        koji su dostupni svim prozorima i kontrolama u aplikaciji.
+        Trenutno je prazna, ali ovde možeš dodati npr. ResourceDictionary, stilove, DataTemplate-ove itd.
+    -->
     <Application.Resources>
          
     </Application.Resources>

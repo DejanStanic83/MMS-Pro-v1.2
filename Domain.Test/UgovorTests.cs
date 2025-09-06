@@ -4,8 +4,16 @@ using System;
 
 namespace Domain.Test
 {
+    /// <summary>
+    /// Test klasa za entitet Ugovor.
+    /// Proverava kreiranje ugovora i osnovna svojstva.
+    /// </summary>
     public class UgovorTests
     {
+        /// <summary>
+        /// Testira da li se Ugovor može uspešno kreirati sa validnim podacima
+        /// i da li su osnovna svojstva ispravno postavljena.
+        /// </summary>
         [Fact]
         public void Ugovor_CanBeCreated_WithValidData()
         {

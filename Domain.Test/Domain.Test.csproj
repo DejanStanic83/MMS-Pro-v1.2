@@ -1,15 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Tip izlaza: biblioteka (DLL, a ne izvršni fajl) -->
     <OutputType>Library</OutputType>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
     <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Uključuje proveru za nullable reference tipove -->
     <Nullable>enable</Nullable>
 
+    <!-- Ovaj projekat se ne može pakovati kao NuGet paket -->
     <IsPackable>false</IsPackable>
+    <!-- Obeležava projekat kao test projekat (omogućava test alate i integracije) -->
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- NuGet paketi potrebni za testiranje i izveštavanje o pokrivenosti koda -->
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -18,10 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referenca na glavni Domain projekat, omogućava testiranje njegovog koda -->
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Omogućava korišćenje Xunit using direktive u testovima -->
     <Using Include="Xunit" />
   </ItemGroup>
 

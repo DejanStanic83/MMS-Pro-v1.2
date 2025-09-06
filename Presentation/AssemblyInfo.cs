@@ -1,10 +1,11 @@
 using System.Windows;
 
+// ThemeInfo atribut definiše gde se nalaze resursi za teme u WPF aplikaciji.
+// Ovo omoguæava WPF-u da pronaðe stilove i resurse u zavisnosti od teme i lokacije.
+
 [assembly: ThemeInfo(
-    ResourceDictionaryLocation.None,            //where theme specific resource dictionaries are located
-                                                //(used if a resource is not found in the page,
-                                                // or application resource dictionaries)
-    ResourceDictionaryLocation.SourceAssembly   //where the generic resource dictionary is located
-                                                //(used if a resource is not found in the page,
-                                                // app, or any theme specific resource dictionaries)
+    ResourceDictionaryLocation.None,            // Gde se nalaze tematski (theme-specific) resource dictionary-ji.
+                                                // (Koristi se ako resurs nije pronaðen u stranici ili aplikacionim resursima.)
+    ResourceDictionaryLocation.SourceAssembly   // Gde se nalazi generièki resource dictionary.
+                                                // (Koristi se ako resurs nije pronaðen u stranici, aplikaciji ili tematskim resursima.)
 )]

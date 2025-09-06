@@ -6,6 +6,13 @@
         xmlns:local="clr-namespace:Presentation"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
+    <!--
+        Glavni prozor aplikacije (MainWindow).
+        Ovde se definiše osnovni raspored i UI elementi aplikacije.
+        Svi vizuelni elementi i kontrole treba da se postavljaju unutar <Grid>.
+        Možeš koristiti DataContext za povezivanje sa MainViewModel ili drugim ViewModel-ima.
+        Dodaj ovde kontrole, menije, panele, UserControl-e i ostale elemente po potrebi.
+    -->
     <Grid>
 
     </Grid>

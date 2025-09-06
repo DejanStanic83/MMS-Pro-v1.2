@@ -1,22 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- Tip izlaza: Windows izvršni fajl (WinExe za WPF aplikacije) -->
     <OutputType>WinExe</OutputType>
+    <!-- Ciljani .NET framework: .NET 8 za Windows aplikacije -->
     <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- Uključuje proveru za nullable reference tipove -->
     <Nullable>enable</Nullable>
+    <!-- Automatski dodaje using direktive za najčešće korišćene namespace-ove -->
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Omogućava WPF podršku u projektu -->
     <UseWPF>true</UseWPF>
+    <!-- Identifikator za User Secrets (čuvanje tajni tokom razvoja) -->
     <UserSecretsId>d1e346ff-9227-4d8c-a55f-fa82026071af</UserSecretsId>
+    <!-- Definiše klasu koja je ulazna tačka aplikacije (StartupObject) -->
     <StartupObject>Presentation.App</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Definisani folderi za organizaciju koda i resursa u projektu -->
     <Folder Include="Helpers\" />
     <Folder Include="Resources\" />
     <Folder Include="Views\" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- NuGet paketi potrebni za MVVM, bazu, konfiguraciju i logovanje -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.19" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
@@ -31,6 +40,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Reference na Application i Domain projekte, omogućava korišćenje njihove logike i modela -->
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
