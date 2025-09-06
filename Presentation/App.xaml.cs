@@ -15,6 +15,7 @@ using Serilog.Extensions.Logging;
 
 namespace Presentation
 {
+    //test za commit
     public partial class App : Application
     {
         public static IServiceProvider? ServiceProvider { get; private set; }
