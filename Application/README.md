@@ -177,10 +177,10 @@ Sada može da se desi da korisnik vidi dve poruke ako oba health check-a padnu.
 
 * [ ] **0.8. Implementiraj UserSession**
 
-  * [ ] Singleton sa UserId, UserName, Role, DisplayName
-  * [ ] Popunjavanje na login, reset na logout
-  * [ ] Dostupan svim ViewModel-ima i servisima
-  * [ ] UI meniji i status bar zavise od Role/UserName
+  * [x] Singleton sa UserId, UserName, Role, DisplayName
+  * [x] Popunjavanje na login, reset na logout
+  * [x] Dostupan svim ViewModel-ima i servisima
+  * [x] UI meniji i status bar zavise od Role/UserName
 
 * [ ] **0.9. Uvedi IsActive i RowVersion u master entitete**
 
