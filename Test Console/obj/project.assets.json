@@ -2522,7 +2522,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\ServiceUser\\.nuget\\packages\\": {},
+    "C:\\Users\\dejan.stanic\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
@@ -2531,14 +2531,14 @@
       "projectUniqueName": "C:\\Servis Interno\\Projekti\\Projekat MMS\\MMS Pro\\Test Console\\Test Console.csproj",
       "projectName": "Test Console",
       "projectPath": "C:\\Servis Interno\\Projekti\\Projekat MMS\\MMS Pro\\Test Console\\Test Console.csproj",
-      "packagesPath": "C:\\Users\\ServiceUser\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\dejan.stanic\\.nuget\\packages\\",
       "outputPath": "C:\\Servis Interno\\Projekti\\Projekat MMS\\MMS Pro\\Test Console\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\ServiceUser\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\dejan.stanic\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],

@@ -5,9 +5,8 @@
 .vscode/
 
 # Build artefacts
-bin/
-obj/
-[Bb]uild/
+[Bb]in/
+[Oo]bj/
 [Ll]og*/
 logs/
 
@@ -27,3 +26,10 @@ packages/
 .idea/
 _ReSharper*/
 *.DotSettings.user
+
+# WPF/WinForms auto-generated
+*MarkupCompile.cache
+*MarkupCompile.lref
+*.g.cs
+*.g.i.cs
+*.baml
