@@ -1,0 +1,33 @@
+1. Domain
+•	Šta testirati:
+•	Entitete (npr. validaciju podataka, metode unutar entiteta ako postoje).
+•	Value object-e i logiku unutar modela.
+•	Primeri testova:
+•	Testiraj da entiteti pravilno reaguju na nevalidne podatke.
+•	Testiraj metode koje menjaju stanje entiteta.
+---
+2. Application
+•	Šta testirati:
+•	Servise (npr. AuthService, poslovnu logiku).
+•	DTO mape (ako ne koristiš AutoMapper).
+•	Interfejse i njihove implementacije (mock-uj zavisnosti).
+•	Primeri testova:
+•	Testiraj autentifikaciju sa validnim i nevalidnim podacima.
+•	Testiraj mapiranje između entiteta i DTO-ova.
+•	Testiraj servisne metode sa različitim scenarijima (uspeh, greška).
+---
+3. Infrastructure
+•	Šta testirati:
+•	Pristup bazi (repository pattern, data access sloj).
+•	Integracione testove za konekciju sa bazom (kao što već imaš).
+•	Primeri testova:
+•	Testiraj CRUD operacije nad bazom koristeći InMemory bazu (za izolovane testove).
+•	Testiraj da li se izuzeci pravilno hvataju i loguju.
+---
+4. Presentation
+•	Šta testirati:
+•	ViewModel-e (logiku komandovanja, validaciju, promene stanja).
+•	Binding-e i reakcije na događaje (možeš koristiti MVVM toolkit za testiranje).
+•	Primeri testova:
+•	Testiraj da li komande u ViewModel-ima rade očekivano.
+•	Testiraj promene stanja u ViewModel-u na osnovu korisničkih akcija.

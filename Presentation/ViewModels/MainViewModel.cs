@@ -11,8 +11,8 @@ namespace MMS.Presentation.ViewModels
             _userSession = userSession;
         }
 
-        public string DisplayName => _userSession.DisplayName;
-        public string Role => _userSession.Role;
+        public string? DisplayName => _userSession.DisplayName;
+        public string? Role => _userSession.Role;
         // Binduj na UI po potrebi
 
         public void Logout()
